@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.119.0';
+const supabase = createClient('https://txueuktoagvcidwdxjxe.supabase.co','sb_publishable_cgK84vg1sY7R1TOxGfsYjw_02uy6ulI');
 // Rudra Furniture Mart — Phase 1 product catalogue
 // Replace temporary photo URLs with your own uploaded files when ready.
 // Set price to a number only after the shop confirms it; null means request a quote.
@@ -113,14 +115,31 @@ function initCatalogueControls(){
  if(search)search.addEventListener('input',event=>{searchTerm=event.target.value.trim().toLowerCase();renderProducts();});
  if(sort)sort.addEventListener('change',event=>{sortMode=event.target.value;renderProducts();});
 }
+async function loadStoreProducts(){
+ try{
+  const {data,error}=await supabase.from('products').select('id,name,short_description,description,material,dimensions,colors,price,price_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
+  if(error)throw error;
+  if(!data?.length)return; // Keep the starter catalogue until the owner publishes real products.
+  const categoryRoom = name => {const n=(name||'').toLowerCase();if(/sofa|chair|living/.test(n))return 'Living';if(/bed|wardrobe/.test(n))return 'Bedroom';if(/dining|table/.test(n))return 'Dining';if(/office/.test(n))return 'Office';if(/door/.test(n))return 'Doors';if(/outdoor/.test(n))return 'Living';return 'All';};
+  const live=data.map(p=>({id:p.id,name:p.name,room:categoryRoom(p.categories?.name),detail:p.short_description||p.description||'Contact us for product details',material:[p.material,p.dimensions,Array.isArray(p.colors)?p.colors.join(', '):''].filter(Boolean).join(' · '),price:p.price_type==='quote'?null:p.price,image:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0]?.url||null,badge:p.is_bestseller?'Bestseller':p.is_featured?'Featured':''}));
+  PRODUCTS.splice(0,PRODUCTS.length,...live);
+  renderProducts();
+ }catch(error){console.warn('Could not load live catalogue; showing starter catalogue.',error);}
+}
 function initForm(){
- const form=document.getElementById('quote-form'),thanks=document.getElementById('thanks');
- form.addEventListener('submit',event=>{
+ const form=document.getElementById('quote-form'),thanks=document.getElementById('thanks'),submit=form.querySelector('button[type="submit"]');
+ form.addEventListener('submit',async event=>{
   event.preventDefault();
-  // Front-end demonstration only; connect enquiry delivery in the next phase.
+  const values=new FormData(form),name=String(values.get('name')||'').trim(),phone=String(values.get('phone')||'').trim();
+  const phoneDigits=phone.replace(/\\D/g,'');
+  if(phoneDigits.length<10||phoneDigits.length>15){alert('Please enter a valid phone number.');return;}
+  submit.disabled=true;submit.textContent='Sending enquiry…';
+  const {error}=await supabase.from('custom_inquiries').insert({name,phone,furniture_type:String(values.get('interest')||'Other'),requirements:String(values.get('details')||'').trim()||null,status:'new'});
+  submit.disabled=false;submit.textContent='Request a call back';
+  if(error){alert('We could not submit your enquiry right now. Please try again or contact the showroom.');console.error(error);return;}
   form.hidden=true;thanks.hidden=false;form.reset();
  });
  document.getElementById('send-another').addEventListener('click',()=>{thanks.hidden=true;form.hidden=false;});
 }
 document.getElementById('year').textContent=new Date().getFullYear();
-renderRooms();renderTabs();initCatalogueControls();renderProducts();initForm();
+renderRooms();renderTabs();initCatalogueControls();renderProducts();initForm();loadStoreProducts();
