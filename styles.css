@@ -570,3 +570,17 @@ body{
  .header-actions{gap:8px}
  .header-actions .btn{min-height:38px;padding:8px 13px;font-size:13px}
 }
+
+
+/* Homepage approved customer feedback and rating summary */
+.customer-reviews{background:linear-gradient(135deg,#f4e9d7,#fffaf2);border:1px solid #e5d4b9;border-radius:24px;padding:42px 30px;margin-top:30px;margin-bottom:30px}
+.review-summary-home{display:flex;justify-content:center;align-items:center;gap:16px;margin:20px auto 24px;padding:16px 24px;max-width:300px;background:#fffdf8;border:1px solid #e5d4b9;border-radius:16px}
+.review-summary-home>strong{font:700 34px Georgia;color:#91662e}.review-summary-home small{display:block;color:#786d62}
+.home-stars{color:#b98536;letter-spacing:2px}.review-parameter-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0}
+.review-parameter{display:flex;flex-direction:column;gap:8px;padding:16px;background:#fffdf8;border:1px solid #e9ddca;border-radius:13px;text-align:center}
+.review-parameter strong{font-size:13px}.review-parameter b{color:#986c2f;font-size:20px}
+.home-review-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+.home-review-card{background:#fffdf9;border:1px solid #e8ddce;border-radius:15px;padding:18px}
+.home-review-card__top{display:flex;justify-content:space-between;gap:8px;align-items:center}.home-review-card p{line-height:1.6;color:#62564a}
+.home-review-card small{color:#8b7e70}
+@media(max-width:760px){.customer-reviews{padding:26px 16px}.review-parameter-grid{grid-template-columns:repeat(2,1fr)}.home-review-cards{grid-template-columns:1fr}}
