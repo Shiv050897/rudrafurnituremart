@@ -280,7 +280,7 @@ function printCustomerBill(req,order,bill,invoice){
 
 async function loadReviews(){
  const root=$('#review-list');if(!root)return;root.textContent='Loading customer feedback…';
- const {data,error}=await supabase.from('customer_reviews').select('*').order('created_at',{ascending:false}).limit(100);
+ const {data,error}=await supabase.from('customer_reviews').select('*').order('created_at',{ascending:false}).limit(200);
  if(error){root.textContent='Could not load reviews: '+error.message;return;}
  root.replaceChildren();if(!data?.length){root.textContent='No feedback submitted yet.';return;}
  data.forEach(review=>{
@@ -291,12 +291,37 @@ async function loadReviews(){
   const date=document.createElement('small');date.textContent=new Date(review.created_at).toLocaleString('en-IN')+' · '+(review.email||'No email')+' · '+(review.consent_to_publish?'Publication consent given':'No publication consent');
   info.append(title,ratings,comment,date);
   const controls=document.createElement('div');controls.className='inquiry-controls';
-  const approval=document.createElement('select');[['false','Pending / hidden'],['true','Approved / public']].forEach(([v,l])=>approval.add(new Option(l,v)));approval.value=String(review.is_approved);
-  approval.disabled=!review.consent_to_publish;
+  const approval=document.createElement('select');[['false','Pending / hidden'],['true','Approved / public']].forEach(([v,l])=>approval.add(new Option(l,v)));approval.value=String(review.is_approved);approval.disabled=!review.consent_to_publish;
   approval.addEventListener('change',async()=>{const {error}=await supabase.from('customer_reviews').update({is_approved:approval.value==='true'}).eq('id',review.id);if(error){alert('Could not update review: '+error.message);approval.value=String(review.is_approved);}else{review.is_approved=approval.value==='true';}});
+  const edit=document.createElement('button');edit.type='button';edit.className='secondary-btn';edit.textContent='Edit';
+  edit.addEventListener('click',async()=>{
+   const fields=[['customer_name','Customer name'],['overall_rating','Overall rating (1–5)'],['product_quality','Product quality (1–5)'],['design_variety','Design & variety (1–5)'],['value_for_money','Value for money (1–5)'],['communication','Communication (1–5)'],['delivery_experience','Delivery (1–5)'],['comment','Customer comment']];
+   const changes={};
+   for(const [key,label] of fields){const value=prompt(label, String(review[key]??''));if(value===null)return;if(key==='customer_name'||key==='comment')changes[key]=value.trim();else changes[key]=Math.max(1,Math.min(5,parseInt(value,10)||1));}
+   if(!changes.customer_name||changes.comment.length<10){alert('Name and a comment of at least 10 characters are required.');return;}
+   const {error}=await supabase.from('customer_reviews').update(changes).eq('id',review.id);if(error){alert('Could not update rating: '+error.message);return;}loadReviews();
+  });
   const feature=document.createElement('button');feature.type='button';feature.className='secondary-btn';feature.textContent=review.is_featured?'Unfeature':'Feature';feature.disabled=!review.is_approved||!review.consent_to_publish;
   feature.addEventListener('click',async()=>{const {error}=await supabase.from('customer_reviews').update({is_featured:!review.is_featured}).eq('id',review.id);if(error){alert(error.message);return;}review.is_featured=!review.is_featured;feature.textContent=review.is_featured?'Unfeature':'Feature';});
-  controls.append(approval,feature);row.append(info,controls);root.append(row);
+  const del=document.createElement('button');del.type='button';del.className='secondary-btn';del.textContent='Delete';del.addEventListener('click',async()=>{if(!confirm('Permanently delete this customer review?'))return;const {error}=await supabase.from('customer_reviews').delete().eq('id',review.id);if(error){alert('Could not delete review: '+error.message);return;}loadReviews();});
+  controls.append(approval,edit,feature,del);row.append(info,controls);root.append(row);
  });
 }
+$('#add-review')?.addEventListener('click',async()=>{
+ const name=prompt('Customer name');if(!name)return;
+ const email=prompt('Customer email (optional)','')||null;
+ const rating=key=>{const v=prompt(key+' rating (1–5)','5');return v===null?null:Math.max(1,Math.min(5,parseInt(v,10)||1));};
+ const values={overall_rating:rating('Overall experience'),product_quality:rating('Product quality'),design_variety:rating('Design & variety'),value_for_money:rating('Value for money'),communication:rating('Staff communication'),delivery_experience:rating('Delivery experience')};
+ if(Object.values(values).some(v=>v===null))return;
+ const comment=prompt('Customer comment (minimum 10 characters)');if(!comment||comment.trim().length<10){alert('Please enter a comment of at least 10 characters.');return;}
+ const consent=confirm('Has this customer explicitly agreed that their name, ratings and comment may be published on the website?');
+ const {error}=await supabase.from('customer_reviews').insert({customer_name:name.trim(),email,comment:comment.trim(),consent_to_publish:consent,is_approved:consent,...values});
+ if(error){alert('Could not add customer rating: '+error.message);return;}alert(consent?'Customer rating added and published.':'Rating saved privately and hidden until publication consent is obtained.');loadReviews();
+});
+$('#share-review-form')?.addEventListener('click',async()=>{
+ const url='https://rudrafurnituremart.com/feedback.html';
+ const message='Thank you for shopping with Rudra Furniture Mart! We would love to hear about your experience. Please share your ratings and feedback here: '+url;
+ try{await navigator.clipboard.writeText(message);alert('Feedback invitation copied. You can now share it with your customers on WhatsApp.');}
+ catch{prompt('Copy this feedback form link and share it with your customer:',message);}
+});
 $('#refresh-reviews')?.addEventListener('click',loadReviews);
