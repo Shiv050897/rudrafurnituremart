@@ -146,3 +146,91 @@ function initForm(){
 }
 document.getElementById('year').textContent=new Date().getFullYear();
 renderRooms();renderTabs();initCatalogueControls();renderProducts();initForm();initCommerce();loadStoreProducts();
+
+
+const CART_KEY='rudra_furniture_cart_v1';
+let cart=[];
+const inr=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(value)||0);
+function readCart(){try{cart=JSON.parse(localStorage.getItem(CART_KEY)||'[]').filter(x=>x&&x.id&&Number.isInteger(x.quantity)&&x.quantity>0);}catch{cart=[];}saveCart();}
+function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(cart));const badge=document.getElementById('cart-count');if(badge)badge.textContent=cart.reduce((n,x)=>n+x.quantity,0);}
+function openLayer(id){document.getElementById(id).hidden=false;document.body.classList.add('modal-open');}
+function closeLayer(id){document.getElementById(id).hidden=true;if(!document.querySelector('.commerce-overlay:not([hidden])'))document.body.classList.remove('modal-open');}
+function initCommerce(){
+ readCart();
+ document.getElementById('open-cart').addEventListener('click',()=>{renderCart();openLayer('cart-modal');});
+ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeLayer(b.dataset.close)));
+ document.querySelectorAll('.commerce-overlay').forEach(layer=>layer.addEventListener('click',e=>{if(e.target===layer)closeLayer(layer.id);}));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.commerce-overlay:not([hidden])').forEach(layer=>closeLayer(layer.id));});
+ document.getElementById('checkout-start').addEventListener('click',startCheckout);
+ document.getElementById('checkout-form').addEventListener('submit',placeCodOrder);
+}
+function addToCart(product){
+ if(!product.id||product.price==null||product.price_type==='quote'){productEnquiry(product);return;}
+ const found=cart.find(x=>x.id===product.id);if(found)found.quantity=Math.min(100,found.quantity+1);else cart.push({id:product.id,quantity:1});
+ saveCart();renderCart();openLayer('cart-modal');
+}
+function cartProducts(){return cart.map(item=>({...item,product:PRODUCTS.find(p=>p.id===item.id)})).filter(x=>x.product&&x.product.price!=null&&x.product.price_type!=='quote');}
+function renderCart(){
+ const root=document.getElementById('cart-items'),summary=document.getElementById('cart-summary'),items=cartProducts();root.replaceChildren();summary.replaceChildren();
+ if(!items.length){root.append(el('p',{class:'muted',text:'Your cart is empty. Add a fixed-price product to continue.'}));document.getElementById('checkout-start').disabled=true;document.getElementById('checkout-start').textContent='Your cart is empty';return;}
+ document.getElementById('checkout-start').disabled=false;document.getElementById('checkout-start').textContent='Proceed to checkout';
+ items.forEach(({id,quantity,product})=>root.append(el('article',{class:'cart-line'},[
+  photo(product.image,product.name,'cart-line__image'),el('div',{class:'cart-line__info'},[
+   el('strong',{text:product.name}),el('span',{class:'muted',text:inr(product.price)+' each'}),
+   el('div',{class:'quantity-control'},[
+    el('button',{type:'button',text:'−',onclick:()=>changeQuantity(id,quantity-1)}),el('span',{text:String(quantity)}),
+    el('button',{type:'button',text:'+',onclick:()=>changeQuantity(id,quantity+1)}),
+    el('button',{type:'button',class:'remove-item',text:'Remove',onclick:()=>changeQuantity(id,0)})
+   ])
+  ]),el('strong',{text:inr(product.price*quantity)})
+ ])));
+ const subtotal=items.reduce((n,x)=>n+x.product.price*x.quantity,0);
+ summary.append(el('div',{class:'cart-total-row'},[el('span',{text:'Subtotal'}),el('strong',{text:inr(subtotal)})]),el('p',{class:'muted',text:'Delivery charges, if any, will be confirmed by the showroom before dispatch.'}));
+}
+function changeQuantity(id,quantity){if(quantity<=0)cart=cart.filter(x=>x.id!==id);else{const item=cart.find(x=>x.id===id);if(item)item.quantity=Math.min(100,quantity);}saveCart();renderCart();}
+function startCheckout(){
+ if(!cartProducts().length)return;closeLayer('cart-modal');
+ const form=document.getElementById('checkout-form');form.hidden=false;document.getElementById('order-success').hidden=true;document.getElementById('checkout-message').textContent='';
+ const subtotal=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);document.getElementById('checkout-total').textContent='Cart subtotal: '+inr(subtotal)+' · Cash on Delivery';
+ openLayer('checkout-modal');
+}
+async function placeCodOrder(event){
+ event.preventDefault();const form=event.currentTarget,button=form.querySelector('button[type=submit]'),msg=document.getElementById('checkout-message');
+ const values=new FormData(form),phone=String(values.get('phone')||'').replace(/\D/g,'');
+ if(phone.length!==10||!/^[6-9]/.test(phone)){msg.textContent='Enter a valid 10-digit Indian mobile number.';return;}
+ const items=cartProducts();if(!items.length){msg.textContent='Your cart is empty.';return;}
+ button.disabled=true;button.textContent='Placing order…';msg.textContent='';
+ const customer={full_name:String(values.get('full_name')).trim(),phone,email:String(values.get('email')||'').trim()||null,address_line:String(values.get('address_line')).trim(),city:String(values.get('city')).trim(),state:String(values.get('state')).trim(),pincode:String(values.get('pincode')).trim(),notes:String(values.get('notes')||'').trim()||null};
+ const {data,error}=await supabase.rpc('place_order',{p_customer:customer,p_items:items.map(x=>({product_id:x.id,quantity:x.quantity})),p_payment_method:'cod',p_coupon:null});
+ button.disabled=false;button.textContent='Place COD order';
+ if(error){msg.textContent=error.message||'We could not place your order. Please check your details and try again.';return;}
+ cart=[];saveCart();form.hidden=true;
+ const success=document.getElementById('order-success');success.hidden=false;success.replaceChildren(el('div',{class:'order-success'},[
+  el('div',{class:'order-success__mark',text:'✓'}),el('h3',{text:'Your order request is received!'}),
+  el('p',{text:'Order number: '+data.order_number}),el('p',{text:'Order total: '+inr(data.total)}),
+  el('p',{text:'Payment: Cash on Delivery. Our team will call you to confirm your order and delivery.'}),
+  el('a',{class:'btn btn--green',href:'https://wa.me/919451713626?text='+encodeURIComponent('Hello Rudra Furniture Mart, I placed order '+data.order_number+'. Please confirm my order.'),target:'_blank',rel:'noopener',text:'Message us on WhatsApp'}),
+  el('button',{class:'btn btn--outline',type:'button',text:'Continue shopping',onclick:()=>closeLayer('checkout-modal')})
+ ]));
+}
+function openProductDetail(product){
+ const root=document.getElementById('product-detail-content');root.replaceChildren();
+ const gallery=el('div',{class:'detail-gallery'}),photos=(product.images||[]).map(x=>x.url).filter(Boolean);
+ if(!photos.length&&product.image)photos.push(product.image);
+ if(photos.length)photos.forEach((url,i)=>gallery.append(el('img',{src:url,alt:product.name+' photo '+(i+1),loading:'lazy'})));
+ else gallery.append(el('div',{class:'detail-no-photo',text:'Product photographs will be added soon'}));
+ const buyable=product.price!=null&&product.price_type!=='quote';
+ root.append(gallery,el('div',{class:'detail-copy'},[
+  el('span',{class:'eyebrow',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.category||product.room)}),
+  el('h2',{id:'detail-title',text:product.name}),el('p',{class:'detail-price',text:buyable?inr(product.price):'Price on request'}),
+  el('p',{text:product.description||product.detail}),
+  el('dl',{class:'detail-specs'},[
+   el('dt',{text:'Material'}),el('dd',{text:product.material||'Please enquire'}),
+   el('dt',{text:'Dimensions'}),el('dd',{text:product.dimensions||'Made to suit your space'}),
+   el('dt',{text:'Colours / finishes'}),el('dd',{text:product.colors?.join(', ')||'Please enquire'}),
+   el('dt',{text:'Customisation'}),el('dd',{text:product.customization||'Please enquire'}),
+   el('dt',{text:'Delivery estimate'}),el('dd',{text:product.delivery_estimate||'To be confirmed'})
+  ]),
+  buyable?el('button',{class:'btn btn--green btn--lg',type:'button',text:'Add to cart',onclick:()=>{closeLayer('product-modal');addToCart(product);}}):el('button',{class:'btn btn--green btn--lg',type:'button',text:'Request a quote',onclick:()=>{closeLayer('product-modal');productEnquiry(product);}})
+ ]));openLayer('product-modal');
+}
