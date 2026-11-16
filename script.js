@@ -166,7 +166,7 @@ let cart=[];
 let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart'};
 const inr=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(value)||0);
 function readCart(){try{cart=JSON.parse(localStorage.getItem(CART_KEY)||'[]').filter(x=>x&&x.id&&Number.isInteger(x.quantity)&&x.quantity>0);}catch{cart=[];}saveCart();}
-function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(cart));const badge=document.getElementById('cart-count');if(badge)badge.textContent=cart.reduce((n,x)=>n+x.quantity,0);}
+function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(cart));const count=cart.reduce((n,x)=>n+x.quantity,0);const badge=document.getElementById('cart-count');if(badge)badge.textContent=count;const floatingCount=document.getElementById('floating-cart-count');if(floatingCount)floatingCount.textContent=count;}
 function openLayer(id){document.getElementById(id).hidden=false;document.body.classList.add('modal-open');}
 function closeLayer(id){document.getElementById(id).hidden=true;if(!document.querySelector('.commerce-overlay:not([hidden])'))document.body.classList.remove('modal-open');}
 function initCommerce(){
@@ -174,7 +174,7 @@ function initCommerce(){
  supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name']).then(({data})=>{(data||[]).forEach(x=>storePayment[x.key]=String(x.value||'').replace(/^\"|\"$/g,''));refreshUpiDisplay();});
  document.querySelectorAll('input[name="payment_method"]').forEach(r=>r.addEventListener('change',refreshUpiDisplay));
  document.getElementById('copy-upi')?.addEventListener('click',async()=>{if(!storePayment.upi_id)return;try{await navigator.clipboard.writeText(storePayment.upi_id);document.getElementById('copy-upi').textContent='Copied';}catch{document.getElementById('upi-id-display').textContent=storePayment.upi_id;}});
- document.getElementById('open-cart').addEventListener('click',()=>{renderCart();openLayer('cart-modal');});
+ const showCart=()=>{renderCart();openLayer('cart-modal');};document.getElementById('open-cart').addEventListener('click',showCart);document.getElementById('floating-cart')?.addEventListener('click',showCart);
  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeLayer(b.dataset.close)));
  document.querySelectorAll('.commerce-overlay').forEach(layer=>layer.addEventListener('click',e=>{if(e.target===layer)closeLayer(layer.id);}));
  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.commerce-overlay:not([hidden])').forEach(layer=>closeLayer(layer.id));});
