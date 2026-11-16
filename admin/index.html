@@ -32,7 +32,7 @@
           <form id="product-form">
             <input type="hidden" name="id">
             <label>Product name<input name="name" required maxlength="120" placeholder="e.g. Sheesham king-size bed"></label>
-            <label>Category<select name="category_id" id="category-select" required><option value="">Loading categories…</option></select></label>
+            <div class="two-col"><label>Furniture type<select name="space_type"><option value="indoor">Indoor furniture</option><option value="outdoor">Outdoor furniture</option><option value="both">Suitable for indoor &amp; outdoor</option></select></label><label>Category<select name="category_id" id="category-select" required><option value="">Loading categories…</option></select></label></div>
             <label>Short description<input name="short_description" maxlength="180" placeholder="A short line about the product"></label>
             <label>Full description<textarea name="description" rows="3" placeholder="Details, construction and features"></textarea></label>
             <div class="two-col"><label>Material<input name="material" placeholder="Sheesham wood"></label><label>Dimensions<input name="dimensions" placeholder="e.g. 6 × 6.5 ft"></label></div>
@@ -40,7 +40,7 @@
             <label>Colours / finishes<input name="colors" placeholder="Natural teak, walnut, white"></label>
             <label>Customisation options<input name="customization" placeholder="Size, polish, fabric options"></label>
             <label>Delivery estimate<input name="delivery_estimate" placeholder="e.g. 3–4 weeks"></label>
-            <label>Product photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG or WebP · maximum 5 MB. You can add another photo when editing later.</small></label>
+            <label>Product photos<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>Upload up to 5 JPG, PNG or WebP images, each up to 5 MB. The first image is the main product photo.</small></label>
             <div class="checks"><label><input name="is_featured" type="checkbox"> Featured product</label><label><input name="is_bestseller" type="checkbox"> Bestseller</label><label><input name="is_active" type="checkbox" checked> Visible on website</label></div>
             <button class="primary-btn" id="save-product" type="submit">Save product</button><p id="form-message" class="message" role="status"></p>
           </form>
