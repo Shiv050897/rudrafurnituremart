@@ -87,7 +87,7 @@ async function loadDashboard(){
   $('#active-total').textContent=products.filter(p=>p.is_active).length;
   renderProducts();
  }
- await Promise.allSettled([loadInquiries(),loadOrders(),loadStoreSettings(),loadBillRequests()]);
+ await Promise.allSettled([loadInquiries(),loadOrders(),loadStoreSettings(),loadBillRequests(),loadReviews()]);
 }
 
 async function loadInquiries(){
@@ -277,3 +277,26 @@ function printCustomerBill(req,order,bill,invoice){
  const doc='<!doctype html><html><head><meta charset="utf-8"><title>'+escapeHtml(invoice)+'</title><style>@page{size:A4;margin:14mm}body{font:13px Inter,Arial;color:#30251d;margin:0;background:#fff}header{padding:22px 24px;background:#2b211b;color:#fff;display:flex;justify-content:space-between;border-bottom:5px solid #c49a4a}h1{font:700 27px Georgia;margin:0;color:#f0d79e}header p{margin:5px 0;color:#f1e5d3}.tag{letter-spacing:3px;color:#e6c47d;font-size:10px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:22px 0}.meta section{background:#f8f3ea;padding:14px;border:1px solid #eadcc6;border-radius:8px}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#4b3525;color:#fff;padding:9px 6px}td{border:1px solid #e5dbce;padding:8px 5px}.totals{width:300px;margin:18px 0 0 auto}.totals div{display:flex;justify-content:space-between;padding:5px 8px;border-bottom:1px solid #eee}.grand{background:#f2e5cd;font-size:17px;font-weight:bold}.foot{margin-top:35px;padding-top:14px;border-top:2px solid #c49a4a;color:#76695d;font-size:11px}.stamp{color:#6c4b25;font-weight:bold;letter-spacing:1px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><header><div><div class="tag">CRAFTED FOR YOUR HOME · SINCE 1999</div><h1>RUDRA</h1><strong>F U R N I T U R E&nbsp; M A R T</strong><p>Vishwakarmanagar, Bataubeer, Shahpur Badlapur,<br>Jaunpur, Uttar Pradesh – 222125, India</p><p>+91 94517 13626 · rudrafurnituremartsupport@gmail.com</p></div><div><h2>TAX INVOICE / BILL</h2><h3>'+escapeHtml(invoice)+'</h3><p>'+new Date().toLocaleDateString('en-IN')+'</p><div class="stamp">PAYMENT VERIFIED</div></div></header><div class="meta"><section><b>BILL TO</b><p>'+escapeHtml(req.customer_name)+'<br>'+escapeHtml(req.phone)+'<br>'+escapeHtml(req.email||'')+'</p><p>'+escapeHtml(order.address_line||'')+'<br>'+escapeHtml(order.city||'')+', '+escapeHtml(order.state||'')+' - '+escapeHtml(order.pincode||'')+'</p></section><section><b>ORDER DETAILS</b><p>Order: '+escapeHtml(order.order_number)+'<br>Payment: '+escapeHtml(order.payment_method||'UPI')+' · '+escapeHtml(order.payment_status)+'<br>Bill date: '+new Date().toLocaleDateString('en-IN')+'</p></section></div><table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Rate</th><th>CGST</th><th>CGST amt</th><th>SGST</th><th>SGST amt</th><th>Line total</th></tr></thead><tbody>'+rows+'</tbody></table><div class="totals"><div><span>Taxable value</span><b>'+money(subtotal,'fixed')+'</b></div><div><span>CGST</span><b>'+money(cgst,'fixed')+'</b></div><div><span>SGST</span><b>'+money(sgst,'fixed')+'</b></div><div><span>Delivery</span><b>'+money(bill.delivery_charge,'fixed')+'</b></div><div><span>Discount</span><b>- '+money(bill.discount,'fixed')+'</b></div><div class="grand"><span>Grand total</span><b>'+money(total,'fixed')+'</b></div></div><p class="foot">Thank you for choosing Rudra Furniture Mart. This bill was approved by the showroom after payment verification. GST details should be issued only where applicable and supported by the seller’s registration and product classification.</p><script>window.onload=()=>window.print()</script></body></html>';
  const win=window.open('','_blank','width=1000,height=800');if(!win){alert('Please allow pop-ups to print/download the bill.');return;}win.document.open();win.document.write(doc);win.document.close();
 }
+
+async function loadReviews(){
+ const root=$('#review-list');if(!root)return;root.textContent='Loading customer feedback…';
+ const {data,error}=await supabase.from('customer_reviews').select('*').order('created_at',{ascending:false}).limit(100);
+ if(error){root.textContent='Could not load reviews: '+error.message;return;}
+ root.replaceChildren();if(!data?.length){root.textContent='No feedback submitted yet.';return;}
+ data.forEach(review=>{
+  const row=document.createElement('article');row.className='inquiry-row';
+  const info=document.createElement('div');const title=document.createElement('h3');title.textContent=review.customer_name+' · '+'★'.repeat(review.overall_rating)+'☆'.repeat(5-review.overall_rating);
+  const ratings=document.createElement('p');ratings.textContent='Quality '+review.product_quality+'/5 · Design '+review.design_variety+'/5 · Value '+review.value_for_money+'/5 · Communication '+review.communication+'/5 · Delivery '+review.delivery_experience+'/5';
+  const comment=document.createElement('p');comment.textContent=review.comment;
+  const date=document.createElement('small');date.textContent=new Date(review.created_at).toLocaleString('en-IN')+' · '+(review.email||'No email')+' · '+(review.consent_to_publish?'Publication consent given':'No publication consent');
+  info.append(title,ratings,comment,date);
+  const controls=document.createElement('div');controls.className='inquiry-controls';
+  const approval=document.createElement('select');[['false','Pending / hidden'],['true','Approved / public']].forEach(([v,l])=>approval.add(new Option(l,v)));approval.value=String(review.is_approved);
+  approval.disabled=!review.consent_to_publish;
+  approval.addEventListener('change',async()=>{const {error}=await supabase.from('customer_reviews').update({is_approved:approval.value==='true'}).eq('id',review.id);if(error){alert('Could not update review: '+error.message);approval.value=String(review.is_approved);}else{review.is_approved=approval.value==='true';}});
+  const feature=document.createElement('button');feature.type='button';feature.className='secondary-btn';feature.textContent=review.is_featured?'Unfeature':'Feature';feature.disabled=!review.is_approved||!review.consent_to_publish;
+  feature.addEventListener('click',async()=>{const {error}=await supabase.from('customer_reviews').update({is_featured:!review.is_featured}).eq('id',review.id);if(error){alert(error.message);return;}review.is_featured=!review.is_featured;feature.textContent=review.is_featured?'Unfeature':'Feature';});
+  controls.append(approval,feature);row.append(info,controls);root.append(row);
+ });
+}
+$('#refresh-reviews')?.addEventListener('click',loadReviews);
