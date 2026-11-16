@@ -87,7 +87,7 @@ async function loadDashboard(){
   $('#active-total').textContent=products.filter(p=>p.is_active).length;
   renderProducts();
  }
- await Promise.allSettled([loadInquiries(),loadOrders(),loadStoreSettings(),loadBillRequests(),loadReviews()]);
+ await Promise.allSettled([loadInquiries(),loadOrders(),loadStoreSettings(),loadBillRequests(),loadReviews(),loadWorkerMonths()]);
 }
 
 async function loadInquiries(){
@@ -325,3 +325,42 @@ $('#share-review-form')?.addEventListener('click',async()=>{
  catch{prompt('Copy this feedback form link and share it with your customer:',message);}
 });
 $('#refresh-reviews')?.addEventListener('click',loadReviews);
+
+async function loadWorkerMonths(){
+ const root=$('#worker-month-list');if(!root)return;root.textContent='Loading monthly surveys…';
+ const {data,error}=await supabase.from('worker_feedback_months').select('*').order('created_at',{ascending:false});
+ if(error){root.textContent='Could not load worker surveys: '+error.message;return;}
+ root.replaceChildren();if(!data?.length){root.textContent='No monthly surveys created yet.';return;}
+ data.forEach(month=>{
+  const row=document.createElement('article');row.className='inquiry-row';const info=document.createElement('div');
+  const title=document.createElement('h3');title.textContent=month.month_label+' · '+(month.is_open?'Open':'Closed');
+  const link=document.createElement('p');const url=location.origin+'/worker-feedback.html?month='+encodeURIComponent(month.id)+'&token='+encodeURIComponent(month.public_token);link.textContent=url;
+  info.append(title,link);
+  const controls=document.createElement('div');controls.className='inquiry-controls';
+  const share=document.createElement('button');share.className='secondary-btn';share.textContent='Copy link';share.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(url);alert('Monthly worker feedback link copied.');}catch{prompt('Copy worker feedback link:',url);}});
+  const view=document.createElement('button');view.className='secondary-btn';view.textContent='View responses';view.addEventListener('click',()=>loadWorkerResponses(month));
+  const toggle=document.createElement('button');toggle.className='secondary-btn';toggle.textContent=month.is_open?'Close form':'Reopen form';toggle.addEventListener('click',async()=>{const {error}=await supabase.from('worker_feedback_months').update({is_open:!month.is_open}).eq('id',month.id);if(error){alert(error.message);return;}loadWorkerMonths();});
+  const del=document.createElement('button');del.className='secondary-btn';del.textContent='Delete month';del.addEventListener('click',async()=>{if(!confirm('Delete this monthly form and all its responses permanently?'))return;const {error}=await supabase.from('worker_feedback_months').delete().eq('id',month.id);if(error){alert(error.message);return;}$('#worker-response-list').replaceChildren();loadWorkerMonths();});
+  controls.append(share,view,toggle,del);row.append(info,controls);root.append(row);
+ });
+}
+async function loadWorkerResponses(month){
+ const root=$('#worker-response-list');root.textContent='Loading responses for '+month.month_label+'…';
+ const {data,error}=await supabase.from('worker_feedback_responses').select('*').eq('month_id',month.id).order('submitted_at',{ascending:false});
+ if(error){root.textContent='Could not load responses: '+error.message;return;}
+ root.replaceChildren();const heading=document.createElement('h3');heading.textContent=month.month_label+' · '+data.length+' responses';root.append(heading);
+ if(!data.length){root.append(document.createTextNode('No responses submitted yet.'));return;}
+ data.forEach((response,index)=>{
+  const card=document.createElement('article');card.className='inquiry-row';const info=document.createElement('div');
+  const title=document.createElement('h3');title.textContent=(index+1)+'. '+response.worker_name+' · '+(response.role||'Role not specified');
+  const date=document.createElement('small');date.textContent=new Date(response.submitted_at).toLocaleString('en-IN');
+  const answers=document.createElement('div');Object.values(response.answers||{}).forEach(a=>{const p=document.createElement('p');p.textContent=(a.question||'Rating')+': '+a.score+'/5';answers.append(p);});
+  info.append(title,date,answers);Object.entries(response.comments||{}).forEach(([key,value])=>{if(value){const p=document.createElement('p');p.textContent=({positive:'What is working well',improvements:'Suggested improvements',safety:'Safety / equipment / other'}[key]||key)+': '+value;info.append(p);}});
+  card.append(info);root.append(card);
+ });
+}
+$('#worker-month-form')?.addEventListener('submit',async e=>{
+ e.preventDefault();const form=e.currentTarget,button=form.querySelector('button'),label=String(new FormData(form).get('month_label')).trim();if(!label)return;button.disabled=true;
+ const {error}=await supabase.from('worker_feedback_months').insert({month_label:label,is_open:true});
+ button.disabled=false;if(error){$('#worker-month-message').textContent='Could not create survey: '+error.message;return;}form.reset();$('#worker-month-message').textContent='Monthly survey created. Copy and share its link below.';loadWorkerMonths();
+});
