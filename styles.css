@@ -621,3 +621,36 @@ body{
  .header.header--scroll-hidden{transform:translateY(-110%);opacity:0;pointer-events:none}
  body{scroll-padding-top:12px}
 }
+
+/* FINAL WALNUT + CHAMPAGNE GOLD BRAND THEME */
+:root{
+ --ground:#F5EDE0!important;--surface:#FFFAF1!important;--ink:#302015!important;
+ --ink-2:#574333!important;--muted:#786957!important;--line:#DCC7A5!important;
+ --green:#B78A45!important;--green-dark:#342116!important;--green-mid:#76502F!important;
+ --teak:#A97935!important;--sand:#E7C987!important;
+}
+body{background:linear-gradient(180deg,#F7F0E5 0%,#F1E3CE 48%,#FBF7F0 100%)!important;color:#302015!important}
+.strip{background:#21150F!important;color:#F9EFD9!important}
+.header{background:linear-gradient(105deg,#291A12 0%,#422A1B 55%,#2B1B12 100%)!important;border-bottom:3px solid #C69A52!important;box-shadow:0 8px 26px rgba(49,30,15,.16)!important}
+.header .brand,.header .brand:hover{color:#FFF3DC!important}
+.header .brand__mark{background:radial-gradient(circle at 35% 28%,#F8E1A7,#C2944A 70%,#8B612B)!important;color:#382316!important;border:2px solid #E7C987!important;box-shadow:inset 0 0 0 3px rgba(80,47,18,.22)!important}
+.header .nav a,.header .header-actions a,.header .header-actions button{color:#FFF2DA!important}
+.header .nav a:hover{color:#E8C987!important}
+.header .btn--green,.header .btn--dark{background:linear-gradient(120deg,#E9CD91,#B9873D)!important;color:#2E1D12!important;border-color:#F2DCA9!important}
+.header .btn--outline{border-color:#D8B46F!important;color:#FFF1D7!important}
+.header .header-actions .btn{box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.btn--green{background:linear-gradient(120deg,#D8B36D,#B68137)!important;color:#2B1A10!important;border-color:#E8CC91!important}
+.btn--green:hover{background:linear-gradient(120deg,#E8C987,#C19148)!important;color:#26170F!important}
+.btn--dark{background:#342116!important;color:#FFF4DF!important}
+.btn--outline{border-color:#A77A3E!important;color:#49301D!important}
+.btn--light{background:#FFF5E4!important;color:#432A17!important;border:1px solid #E5C98D!important}
+.launch-banner__slides{background:#4A3321!important;box-shadow:0 18px 42px rgba(68,43,19,.18)!important}
+.launch-slide__shade{background:linear-gradient(90deg,rgba(35,22,13,.82) 0%,rgba(54,34,19,.62) 42%,rgba(49,30,17,.06) 82%),linear-gradient(0deg,rgba(35,22,13,.2),transparent 50%)!important}
+.launch-slide .eyebrow--light{color:#F0CF8D!important}
+.launch-banner__controls button{border-color:#C69A52!important}
+.hero,.section{color:#302015}
+.product-card,.category-tile,.collection-card{border-color:#DDC9A9!important;background:#FFFAF1!important}
+.product-card .price,.price{color:#94672E!important}
+.footer{background:linear-gradient(110deg,#21150F,#422A1B)!important;color:#F6EBD6!important;border-top:3px solid #B98B47!important}
+.footer a{color:#E8C987!important}
+@media(max-width:640px){.header{background:#2D1C12!important}}
