@@ -242,6 +242,8 @@ async function loadBillRequests(){
    const lines=(req.bill_data?.items?.length?req.bill_data.items:(order.order_items||[]).map(x=>({name:x.product_name,quantity:x.quantity,unit_price:Number(x.unit_price),cgst_rate:0,sgst_rate:0})));
    const bill={items:lines,delivery_charge:Number(req.bill_data?.delivery_charge??order.delivery_charge??0),discount:Number(req.bill_data?.discount??order.discount??0),notes:req.bill_data?.notes||''};
    for(const line of bill.items){
+    const name=prompt('Product / description',String(line.name));if(name===null)return;line.name=name.trim()||line.name;
+    const qty=prompt('Quantity for '+line.name,String(line.quantity));if(qty===null)return;line.quantity=Math.max(1,Math.min(100,parseInt(qty,10)||1));
     const price=prompt('Unit price for '+line.name+' (₹)',String(line.unit_price));if(price===null)return;line.unit_price=Math.max(0,Number(price)||0);
     const cg=prompt('CGST rate % for '+line.name+' (0 if not applicable)',String(line.cgst_rate||0));if(cg===null)return;line.cgst_rate=Math.max(0,Number(cg)||0);
     const sg=prompt('SGST rate % for '+line.name+' (0 if not applicable)',String(line.sgst_rate||0));if(sg===null)return;line.sgst_rate=Math.max(0,Number(sg)||0);
