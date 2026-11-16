@@ -4,3 +4,5 @@
 .settings-form input[type=file]{max-width:100%;padding:10px;background:#fff;border:1px dashed #c49a4a;border-radius:10px}
 #bill-request-list .inquiry-row{border-left:4px solid #c49a4a}
 #bill-request-list .primary-btn:disabled{opacity:.45;cursor:not-allowed}
+
+#review-list .inquiry-row{border-left:4px solid #c49a4a}#review-list .inquiry-row p{line-height:1.5}
