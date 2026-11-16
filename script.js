@@ -189,6 +189,26 @@ const CART_KEY='rudra_furniture_cart_v1';
 let cart=[];
 let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:''};
 
+
+// Accessible collapsible navigation for mobile screens
+const mobileMenuToggle=document.getElementById('mobile-menu-toggle');
+const primaryNavigation=document.getElementById('primary-navigation');
+if(mobileMenuToggle&&primaryNavigation){
+ mobileMenuToggle.addEventListener('click',()=>{
+  const expanded=mobileMenuToggle.getAttribute('aria-expanded')==='true';
+  mobileMenuToggle.setAttribute('aria-expanded',String(!expanded));
+  primaryNavigation.classList.toggle('is-open',!expanded);
+  mobileMenuToggle.querySelector('.mobile-menu-icon').textContent=expanded?'☰':'✕';
+  mobileMenuToggle.querySelector('.mobile-menu-label').textContent=expanded?'Menu':'Close';
+ });
+ primaryNavigation.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{
+  primaryNavigation.classList.remove('is-open');
+  mobileMenuToggle.setAttribute('aria-expanded','false');
+  mobileMenuToggle.querySelector('.mobile-menu-icon').textContent='☰';
+  mobileMenuToggle.querySelector('.mobile-menu-label').textContent='Menu';
+ }));
+}
+
 document.getElementById('year').textContent=new Date().getFullYear();
 loadHomepageReviews();
 renderRooms();renderTabs();initCatalogueControls();initLaunchBanner();renderProducts();initForm();initCommerce();loadStoreProducts();
