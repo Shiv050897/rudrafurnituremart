@@ -75,7 +75,7 @@ async function loadInquiries(){
   const status=document.createElement('select');['new','contacted','quoted','closed'].forEach(v=>status.add(new Option(v[0].toUpperCase()+v.slice(1),v)));status.value=item.status||'new';
   status.addEventListener('change',async()=>{const {error}=await supabase.from('custom_inquiries').update({status:status.value}).eq('id',item.id);if(error){alert('Could not update enquiry: '+error.message);status.value=item.status||'new';}else item.status=status.value;});
   const call=document.createElement('a');call.href='tel:'+item.phone.replace(/[^+\\d]/g,'');call.textContent='Call';call.className='secondary-btn';
-  const wa=document.createElement('a');wa.href='https://wa.me/'+item.phone.replace(/\\D/g,'');wa.target='_blank';wa.rel='noopener';wa.textContent='WhatsApp';wa.className='secondary-btn';
+  const wa=document.createElement('a');wa.href='https://wa.me/'+item.phone.replace(/\Dg,'');wa.target='_blank';wa.rel='noopener';wa.textContent='WhatsApp';wa.className='secondary-btn';
   controls.append(status,call,wa);row.append(info,controls);root.append(row);
  });
 }
