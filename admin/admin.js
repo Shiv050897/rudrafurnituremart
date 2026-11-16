@@ -87,7 +87,8 @@ async function loadDashboard(){
 }
 
 async function loadInquiries(){
- const root=$('#inquiry-list');
+ const root=$('#inquiry-list');root.textContent='Loading enquiries…';
+ try{
  const {data,error}=await supabase.from('custom_inquiries').select('id,name,phone,furniture_type,dimensions,material,budget,requirements,status,created_at').order('created_at',{ascending:false}).limit(40);
  if(error){root.textContent='Could not load enquiries: '+error.message;return;}
  root.replaceChildren();
@@ -106,6 +107,7 @@ async function loadInquiries(){
   const wa=document.createElement('a');wa.href='https://wa.me/'+item.phone.replace(/[^0-9]/g,'');wa.target='_blank';wa.rel='noopener';wa.textContent='WhatsApp';wa.className='secondary-btn';
   controls.append(status,call,wa);row.append(info,controls);root.append(row);
  });
+ }catch(error){root.textContent='Enquiry loading failed: '+(error?.message||String(error));}
 }
 $('#refresh-inquiries')?.addEventListener('click',loadInquiries);
 
@@ -118,7 +120,9 @@ function printInvoice(order){
 }
 
 async function loadOrders(){
- const root=$('#order-list');const {data,error}=await supabase.from('orders').select('id,order_number,customer_name,phone,address_line,city,state,pincode,subtotal,delivery_charge,total,payment_method,payment_status,status,created_at,order_items(product_name,quantity,unit_price,line_total)').order('created_at',{ascending:false}).limit(100);
+ const root=$('#order-list');root.textContent='Loading orders…';
+ try{
+ const {data,error}=await supabase.from('orders').select('id,order_number,customer_name,phone,address_line,city,state,pincode,subtotal,delivery_charge,total,payment_method,payment_status,status,created_at,order_items(product_name,quantity,unit_price,line_total)').order('created_at',{ascending:false}).limit(100);
  if(error){root.textContent='Could not load orders: '+error.message;return;}
  root.replaceChildren();
  if(!data?.length){const p=document.createElement('p');p.className='subtle';p.textContent='No orders received yet.';root.append(p);return;}
@@ -140,6 +144,7 @@ async function loadOrders(){
   const bill=document.createElement('button');bill.type='button';bill.className='secondary-btn';bill.textContent='Generate bill';bill.addEventListener('click',()=>printInvoice(order));
   controls.append(status,payment,call,wa,bill);row.append(info,controls);root.append(row);
  });
+ }catch(error){root.textContent='Order loading failed: '+(error?.message||String(error));}
 }
 $('#refresh-orders')?.addEventListener('click',loadOrders);
 
