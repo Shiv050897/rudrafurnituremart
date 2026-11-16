@@ -1,16 +1,16 @@
 /* Rudra Furniture Mart — site styles */
 :root {
-  --ground: #F3F1EC;
-  --surface: #FFFFFF;
-  --ink: #1C1B19;
-  --ink-2: #4A463E;
-  --muted: #5C574D;
-  --line: #DDD8CD;
-  --green: #2F5D46;
-  --green-dark: #1E3F2F;
-  --green-mid: #2A4E3C;
-  --teak: #A1552A;
-  --sand: #E8B98F;
+  --ground: #F4EFE6;
+  --surface: #FFFCF6;
+  --ink: #241B16;
+  --ink-2: #514237;
+  --muted: #76695D;
+  --line: #DED2C1;
+  --green: #5A3928;
+  --green-dark: #2A1C16;
+  --green-mid: #704B35;
+  --teak: #A8793F;
+  --sand: #D8BC83;
   --radius: 20px;
   --display: 'Bricolage Grotesque', system-ui, sans-serif;
   --body: Inter, system-ui, sans-serif;
@@ -222,3 +222,22 @@ input, textarea, select, button { font: inherit; }
 .floating-cart:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(20,40,28,.3)}
 .floating-cart b{display:grid;place-items:center;min-width:23px;height:23px;padding:0 6px;border-radius:50%;background:#fff;color:#2f5d46;font-size:12px}
 @media(max-width:600px){.floating-cart{right:14px;bottom:14px;padding:12px 15px}}
+
+
+/* Premium walnut, antique-gold and warm-ivory finish */
+.btn--green,.floating-cart{background:#5A3928}
+.btn--green:hover,.floating-cart:hover{background:#2A1C16}
+.btn--outline{border-color:#8B7258}
+.btn--outline:hover{background:#2A1C16;border-color:#2A1C16}
+.brand__mark{background:linear-gradient(145deg,#815B3C,#2A1C16);border:1px solid #B08A55;color:#F4EFE6}
+.strip{background:#211712}
+.header{box-shadow:0 5px 22px rgba(42,28,22,.045)}
+.product,.room,.commerce-panel{border-color:#E4D8C8}
+.product__price,.detail-price{color:#815B3C}
+.eyebrow{color:#96703E}
+.promise{background:#EDE4D7}
+.footer{background:#211712;color:#F4EFE6}
+.footer a,.footer__brand p{color:#D8C8B4}
+.footer__bottom{border-color:rgba(216,188,131,.22)}
+.floating-cart{box-shadow:0 10px 30px rgba(42,28,22,.28);border:1px solid rgba(216,188,131,.55)}
+.floating-cart b{color:#2A1C16}
