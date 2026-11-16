@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Rudra Furniture Mart | Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <header class="topbar"><a class="brand" href="../"><span class="brand-mark">R</span><span><b>Rudra</b><small>Furniture Mart · Admin</small></span></a><a href="../" class="site-link">View website ↗</a></header>
+  <main>
+    <section id="login-panel" class="login-wrap">
+      <div class="login-card">
+        <div class="kicker">SECURE ADMIN ACCESS</div><h1>Welcome back.</h1><p>Sign in to manage your furniture catalogue.</p>
+        <form id="login-form">
+          <label>Email address<input name="email" type="email" value="rudrafurnituremartsupport@gmail.com" autocomplete="username" required></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+          <button class="primary-btn" type="submit">Sign in to dashboard</button>
+          <p id="login-message" class="message" role="status"></p>
+        </form>
+        <button id="forgot-password" class="text-btn" type="button">Forgot password?</button>
+      </div>
+    </section>
+    <section id="dashboard" hidden>
+      <div class="dashboard-head"><div><div class="kicker">STORE CONTROL</div><h1>Product dashboard</h1><p id="signed-in-as" class="subtle"></p></div><button id="logout" class="secondary-btn">Sign out</button></div>
+      <div class="stats"><article><span>Products</span><strong id="product-total">—</strong></article><article><span>Active listings</span><strong id="active-total">—</strong></article><article><span>Categories</span><strong id="category-total">—</strong></article></div>
+      <div class="workspace">
+        <section class="panel editor"><div class="panel-head"><div><div class="kicker">CATALOGUE EDITOR</div><h2 id="editor-title">Add a product</h2></div><button id="reset-form" class="text-btn" type="button">Clear form</button></div>
+          <form id="product-form">
+            <input type="hidden" name="id">
+            <label>Product name<input name="name" required maxlength="120" placeholder="e.g. Sheesham king-size bed"></label>
+            <label>Category<select name="category_id" id="category-select" required><option value="">Loading categories…</option></select></label>
+            <label>Short description<input name="short_description" maxlength="180" placeholder="A short line about the product"></label>
+            <label>Full description<textarea name="description" rows="3" placeholder="Details, construction and features"></textarea></label>
+            <div class="two-col"><label>Material<input name="material" placeholder="Sheesham wood"></label><label>Dimensions<input name="dimensions" placeholder="e.g. 6 × 6.5 ft"></label></div>
+            <div class="two-col"><label>Price type<select name="price_type"><option value="quote">Request a quote</option><option value="fixed">Fixed price</option><option value="starting">Starting from</option></select></label><label>Price (₹)<input name="price" type="number" min="0" step="1" placeholder="Leave blank for quote"></label></div>
+            <label>Colours / finishes<input name="colors" placeholder="Natural teak, walnut, white"></label>
+            <label>Product photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG or WebP · maximum 5 MB. You can add another photo when editing later.</small></label>
+            <div class="checks"><label><input name="is_featured" type="checkbox"> Featured product</label><label><input name="is_bestseller" type="checkbox"> Bestseller</label><label><input name="is_active" type="checkbox" checked> Visible on website</label></div>
+            <button class="primary-btn" id="save-product" type="submit">Save product</button><p id="form-message" class="message" role="status"></p>
+          </form>
+        </section>
+        <section class="panel listings"><div class="panel-head"><div><div class="kicker">YOUR INVENTORY</div><h2>All products</h2></div><button id="refresh" class="secondary-btn">Refresh</button></div>
+          <div class="search-row"><input id="filter-products" type="search" placeholder="Search products…"><span id="list-count" class="subtle"></span></div>
+          <div id="product-list" class="product-list"><p class="subtle">Loading products…</p></div>
+        </section>
+      </div>
+      <p class="security-note">Admin access is verified by Supabase Auth and the database admin role. Never share your password or add secret keys to this website.</p>
+    </section>
+  </main>
+  <footer>© <span id="year"></span> Rudra Furniture Mart</footer>
+</div>
+<script type="module" src="admin.js"></script>
+</body></html>
