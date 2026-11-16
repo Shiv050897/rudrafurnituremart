@@ -32,7 +32,7 @@ const PRODUCTS = [
 ];
 
 const TABS=['All',...ROOMS.map(room=>room.key)];
-let activeRoom='All',searchTerm='',sortMode='featured';
+let activeRoom='All',activeSpace='all',searchTerm='',sortMode='featured';
 
 function el(tag,attrs={},children=[]){
  const node=document.createElement(tag);
@@ -86,7 +86,7 @@ function visibleProducts(){
  let list=PRODUCTS.filter(product=>{
   const roomMatch=activeRoom==='All'||product.room===activeRoom;
   const text=(product.name+' '+product.room+' '+product.detail+' '+product.material).toLowerCase();
-  return roomMatch&&text.includes(searchTerm);
+  const spaceMatch=activeSpace==='all'||activeSpace===product.space_type||product.space_type==='both';\n  return roomMatch&&spaceMatch&&text.includes(searchTerm);
  });
  if(sortMode==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
  if(sortMode==='price-low')list.sort((a,b)=>(a.price??Infinity)-(b.price??Infinity));
@@ -103,7 +103,7 @@ function renderProducts(){
   const price=el('span',{class:product.price==null?'product__price product__price--quote':'product__price',text:formatPrice(product.price)});
   const action=el('button',{type:'button',class:'btn btn--green',text:product.price==null?'Get a quote':'Enquire',onclick:()=>productEnquiry(product)});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
-   el('span',{class:'product__meta',text:product.room}),el('h3',{text:product.name}),
+   el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+product.room}),el('h3',{text:product.name}),
    el('span',{class:'product__detail',text:product.detail}),el('span',{class:'product__meta',text:product.material}),
    el('div',{class:'product__foot'},[price,action])
   ])]);
@@ -117,11 +117,11 @@ function initCatalogueControls(){
 }
 async function loadStoreProducts(){
  try{
-  const {data,error}=await supabase.from('products').select('id,name,short_description,description,material,dimensions,colors,price,price_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
+  const {data,error}=await supabase.from('products').select('id,name,short_description,description,material,dimensions,colors,price,price_type,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
   if(error)throw error;
-  if(!data?.length)return; // Keep the starter catalogue until the owner publishes real products.
+  if(!data?.length){PRODUCTS.splice(0,PRODUCTS.length);renderProducts();return;}
   const categoryRoom = name => {const n=(name||'').toLowerCase();if(/sofa|chair|living/.test(n))return 'Living';if(/bed|wardrobe/.test(n))return 'Bedroom';if(/dining|table/.test(n))return 'Dining';if(/office/.test(n))return 'Office';if(/door/.test(n))return 'Doors';if(/outdoor/.test(n))return 'Living';return 'All';};
-  const live=data.map(p=>({id:p.id,name:p.name,room:categoryRoom(p.categories?.name),detail:p.short_description||p.description||'Contact us for product details',material:[p.material,p.dimensions,Array.isArray(p.colors)?p.colors.join(', '):''].filter(Boolean).join(' · '),price:p.price_type==='quote'?null:p.price,image:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0]?.url||null,badge:p.is_bestseller?'Bestseller':p.is_featured?'Featured':''}));
+  const live=data.map(p=>({id:p.id,name:p.name,room:categoryRoom(p.categories?.name),space_type:p.space_type||'indoor',detail:p.short_description||p.description||'Contact us for product details',material:[p.material,p.dimensions,Array.isArray(p.colors)?p.colors.join(', '):''].filter(Boolean).join(' · '),price:p.price_type==='quote'?null:p.price,image:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0]?.url||null,badge:p.is_bestseller?'Bestseller':p.is_featured?'Featured':''}));
   PRODUCTS.splice(0,PRODUCTS.length,...live);
   renderProducts();
  }catch(error){console.warn('Could not load live catalogue; showing starter catalogue.',error);}
