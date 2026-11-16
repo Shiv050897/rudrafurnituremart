@@ -187,7 +187,7 @@ function initForm(){
 }
 const CART_KEY='rudra_furniture_cart_v1';
 let cart=[];
-let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart'};
+let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:''};
 
 document.getElementById('year').textContent=new Date().getFullYear();
 renderRooms();renderTabs();initCatalogueControls();initLaunchBanner();renderProducts();initForm();initCommerce();loadStoreProducts();
@@ -200,7 +200,7 @@ function openLayer(id){document.getElementById(id).hidden=false;document.body.cl
 function closeLayer(id){document.getElementById(id).hidden=true;if(!document.querySelector('.commerce-overlay:not([hidden])'))document.body.classList.remove('modal-open');}
 function initCommerce(){
  readCart();
- supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name']).then(({data})=>{(data||[]).forEach(x=>storePayment[x.key]=String(x.value||'').replace(/^\"|\"$/g,''));refreshUpiDisplay();});
+ supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name','upi_qr_url']).then(({data})=>{(data||[]).forEach(x=>storePayment[x.key]=String(x.value||'').replace(/^\"|\"$/g,''));refreshUpiDisplay();});
  document.querySelectorAll('input[name="payment_method"]').forEach(r=>r.addEventListener('change',refreshUpiDisplay));
  document.getElementById('copy-upi')?.addEventListener('click',async()=>{if(!storePayment.upi_id)return;try{await navigator.clipboard.writeText(storePayment.upi_id);document.getElementById('copy-upi').textContent='Copied';}catch{document.getElementById('upi-id-display').textContent=storePayment.upi_id;}});
  const showCart=()=>{renderCart();openLayer('cart-modal');};document.getElementById('open-cart').addEventListener('click',showCart);document.getElementById('floating-cart')?.addEventListener('click',showCart);
@@ -210,7 +210,7 @@ function initCommerce(){
  document.getElementById('checkout-start').addEventListener('click',startCheckout);
  document.getElementById('checkout-form').addEventListener('submit',placeCodOrder);
 }
-function refreshUpiDisplay(){const chosen=document.querySelector('input[name="payment_method"]:checked')?.value==='upi';const panel=document.getElementById('upi-payment-info');if(!panel)return;panel.hidden=!chosen;document.getElementById('upi-id-display').textContent=storePayment.upi_id?storePayment.upi_id+' · '+storePayment.upi_name:'UPI payment is not configured yet. Please choose Cash on Delivery or contact the showroom.';const link=document.getElementById('upi-app-link');const total=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);link.href=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR':'#';link.hidden=!storePayment.upi_id;}
+function refreshUpiDisplay(){const qrWrap=document.getElementById('upi-qr-wrap'),qrImage=document.getElementById('upi-qr-image');if(qrWrap&&qrImage){qrWrap.hidden=!storePayment.upi_qr_url; if(storePayment.upi_qr_url)qrImage.src=storePayment.upi_qr_url;}const chosen=document.querySelector('input[name="payment_method"]:checked')?.value==='upi';const panel=document.getElementById('upi-payment-info');if(!panel)return;panel.hidden=!chosen;document.getElementById('upi-id-display').textContent=storePayment.upi_id?storePayment.upi_id+' · '+storePayment.upi_name:'UPI payment is not configured yet. Please choose Cash on Delivery or contact the showroom.';const link=document.getElementById('upi-app-link');const total=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);link.href=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR':'#';link.hidden=!storePayment.upi_id;}
 function addToCart(product){
  if(!product.id||product.price==null||product.price_type!=='fixed'){productEnquiry(product);return;}
  const found=cart.find(x=>x.id===product.id);if(found)found.quantity=Math.min(100,found.quantity+1);else cart.push({id:product.id,quantity:1});
@@ -258,6 +258,7 @@ async function placeCodOrder(event){
   el('div',{class:'order-success__mark',text:'✓'}),el('h3',{text:'Your order request is received!'}),
   el('p',{text:'Order number: '+data.order_number}),el('p',{text:'Order total: '+inr(data.total)}),
   el('p',{text:method==='cod'?'Payment: Cash on Delivery. Our team will call you to confirm your order and delivery.':'Payment: UPI selected. Your order is pending payment verification by our showroom.'}),
+  el('button',{class:'btn btn--outline',type:'button',text:'Request downloadable bill',onclick:async()=>{const {error}=await supabase.from('bill_requests').insert({order_id:data.order_id,customer_name:customer.full_name,phone:customer.phone,email:customer.email,bill_data:{items:items.map(x=>({name:x.product.name,quantity:x.quantity,unit_price:Number(x.product.price),cgst_rate:0,sgst_rate:0})),delivery_charge:0,discount:0}});if(error){alert('Bill request could not be sent: '+error.message);return;}alert('Bill request sent. Admin will verify payment and approve the bill. You can later check it using your order number and mobile number.');}}),
   el('a',{class:'btn btn--green',href:'https://wa.me/919451713626?text='+encodeURIComponent('Hello Rudra Furniture Mart, I placed order '+data.order_number+'. Please confirm my order.'),target:'_blank',rel:'noopener',text:'Message us on WhatsApp'}),
   el('button',{class:'btn btn--outline',type:'button',text:'Continue shopping',onclick:()=>closeLayer('checkout-modal')})
  ]));
@@ -283,3 +284,22 @@ function openProductDetail(product){
   buyable?el('button',{class:'btn btn--green btn--lg',type:'button',text:'Add to cart',onclick:()=>{closeLayer('product-modal');addToCart(product);}}):el('button',{class:'btn btn--green btn--lg',type:'button',text:'Request a quote',onclick:()=>{closeLayer('product-modal');productEnquiry(product);}})
  ]));openLayer('product-modal');
 }
+
+async function renderApprovedBill(payload){
+ const req=payload,ord=payload.order,bill=payload.bill_data||{},items=bill.items||[];
+ const subtotal=items.reduce((sum,x)=>sum+Number(x.unit_price||0)*Number(x.quantity||0),0);
+ let cgst=0,sgst=0;
+ const rows=items.map((x,i)=>{const base=Number(x.unit_price||0)*Number(x.quantity||0),c=base*Number(x.cgst_rate||0)/100,s=base*Number(x.sgst_rate||0)/100;cgst+=c;sgst+=s;return '<tr><td>'+(i+1)+'</td><td>'+escapeBill(x.name)+'</td><td>'+x.quantity+'</td><td>'+inr(x.unit_price)+'</td><td>'+Number(x.cgst_rate||0)+'%</td><td>'+inr(c)+'</td><td>'+Number(x.sgst_rate||0)+'%</td><td>'+inr(s)+'</td><td>'+inr(base+c+s)+'</td></tr>';}).join('');
+ const total=subtotal+cgst+sgst+Number(bill.delivery_charge||0)-Number(bill.discount||0);
+ const doc='<!doctype html><html><head><meta charset="utf-8"><title>'+escapeBill(req.invoice_number)+'</title><style>@page{size:A4;margin:14mm}body{font:13px Arial;color:#30251d}header{padding:22px;background:#2b211b;color:white;border-bottom:5px solid #c49a4a;display:flex;justify-content:space-between}h1{color:#f0d79e;margin:0;font:700 28px Georgia}.meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}.meta section{background:#f8f3ea;padding:14px}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#4b3525;color:white;padding:8px}td{border:1px solid #ddd;padding:7px}.totals{width:280px;margin:20px 0 0 auto}.totals div{display:flex;justify-content:space-between;padding:6px}.grand{background:#f2e5cd;font-weight:bold;font-size:17px}.foot{margin-top:35px;border-top:2px solid #c49a4a;padding-top:12px;color:#76695d}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><header><div><h1>RUDRA</h1><b>F U R N I T U R E M A R T</b><p>Vishwakarmanagar, Bataubeer, Shahpur Badlapur,<br>Jaunpur, Uttar Pradesh – 222125</p><p>+91 94517 13626 · rudrafurnituremartsupport@gmail.com</p></div><div><h2>TAX INVOICE / BILL</h2><b>'+escapeBill(req.invoice_number)+'</b><p>'+new Date().toLocaleDateString('en-IN')+'</p><b>PAYMENT VERIFIED</b></div></header><div class="meta"><section><b>BILL TO</b><p>'+escapeBill(req.customer_name)+'<br>'+escapeBill(req.phone)+'<br>'+escapeBill(req.email||'')+'</p><p>'+escapeBill(ord.address_line)+'<br>'+escapeBill(ord.city)+', '+escapeBill(ord.state)+' - '+escapeBill(ord.pincode)+'</p></section><section><b>ORDER DETAILS</b><p>'+escapeBill(ord.order_number)+'<br>Payment: '+escapeBill(ord.payment_method)+' · Paid</p></section></div><table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Rate</th><th>CGST</th><th>CGST amt</th><th>SGST</th><th>SGST amt</th><th>Total</th></tr></thead><tbody>'+rows+'</tbody></table><div class="totals"><div><span>Taxable value</span><b>'+inr(subtotal)+'</b></div><div><span>CGST</span><b>'+inr(cgst)+'</b></div><div><span>SGST</span><b>'+inr(sgst)+'</b></div><div><span>Delivery</span><b>'+inr(bill.delivery_charge)+'</b></div><div><span>Discount</span><b>- '+inr(bill.discount)+'</b></div><div class="grand"><span>Grand total</span><b>'+inr(total)+'</b></div></div><p class="foot">Thank you for choosing Rudra Furniture Mart. This bill has been approved after payment verification. GST particulars apply only where legally applicable.</p><script>window.onload=()=>window.print()</script></body></html>';
+ const win=window.open('','_blank','width=1000,height=800');if(!win){alert('Allow pop-ups to download/print the approved bill.');return;}win.document.write(doc);win.document.close();
+}
+function escapeBill(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+document.getElementById('bill-lookup-form')?.addEventListener('submit',async e=>{
+ e.preventDefault();const f=new FormData(e.currentTarget),msg=document.getElementById('bill-lookup-message'),area=document.getElementById('bill-download-area');msg.textContent='Checking…';area.replaceChildren();
+ const {data,error}=await supabase.rpc('get_approved_customer_bill',{p_order_number:String(f.get('order_number')).trim(),p_phone:String(f.get('phone')).trim()});
+ if(error){msg.textContent='Could not check bill status. Please contact the showroom.';return;}
+ if(!data||data.request_status==='not_available'){msg.textContent='No approved bill found yet. If you requested one, please wait for payment verification and admin approval.';return;}
+ msg.textContent='Your bill is approved and ready.';
+ area.append(el('button',{type:'button',class:'btn btn--green',text:'Download / Print approved bill',onclick:()=>renderApprovedBill(data)}));
+});
