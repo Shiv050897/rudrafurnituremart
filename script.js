@@ -266,10 +266,19 @@ async function placeCodOrder(event){
 }
 function openProductDetail(product){
  const root=document.getElementById('product-detail-content');root.replaceChildren();
- const gallery=el('div',{class:'detail-gallery'}),photos=(product.images||[]).map(x=>x.url).filter(Boolean);
+ const photos=(product.images||[]).map(x=>x.url).filter(Boolean);
  if(!photos.length&&product.image)photos.push(product.image);
- if(photos.length)photos.forEach((url,i)=>gallery.append(el('img',{src:url,alt:product.name+' photo '+(i+1),loading:'lazy'})));
- else gallery.append(el('div',{class:'detail-no-photo',text:'Product photographs will be added soon'}));
+ const gallery=el('div',{class:'detail-gallery'});
+ if(photos.length){
+  const viewer=el('div',{class:'detail-gallery__viewer'});
+  const main=el('img',{src:photos[0],alt:product.name+' main photograph'});
+  const zoom=el('button',{type:'button',class:'detail-gallery__zoom',text:'⛶ View larger',onclick:()=>{const win=window.open('','_blank');if(win){win.document.write('<title>'+product.name+'</title><img src="'+photos[active]+'" style="max-width:100%;height:auto;display:block;margin:auto">');win.document.close();}}});
+  viewer.append(main,zoom);
+  const thumbs=el('div',{class:'detail-gallery__thumbs'});
+  let active=0;
+  photos.forEach((url,i)=>{const thumb=el('button',{type:'button',class:'detail-gallery__thumb'+(i===0?' is-active':''),ariaLabel:'View product photo '+(i+1),onclick:()=>{active=i;main.src=url;main.alt=product.name+' photo '+(i+1);thumbs.querySelectorAll('button').forEach((b,k)=>b.classList.toggle('is-active',k===i));}});thumb.append(el('img',{src:url,alt:product.name+' thumbnail '+(i+1),loading:'lazy'}));thumbs.append(thumb);});
+  gallery.append(viewer,thumbs);
+ }else gallery.append(el('div',{class:'detail-no-photo',text:'Product photographs will be added soon'}));
  const buyable=product.price!=null&&product.price_type==='fixed';
  root.append(gallery,el('div',{class:'detail-copy'},[
   el('span',{class:'eyebrow',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.category||product.room)}),
