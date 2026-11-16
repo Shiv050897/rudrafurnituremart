@@ -102,11 +102,12 @@ function renderProducts(){
   const image=photo(product.image,product.name,'product__photo');
   if(product.badge)image.append(el('span',{class:'product__badge',text:product.badge}));
   const price=el('span',{class:product.price==null?'product__price product__price--quote':'product__price',text:formatPrice(product.price)});
-  const action=el('button',{type:'button',class:'btn btn--green',text:product.price==null?'Get a quote':'Enquire',onclick:()=>productEnquiry(product)});
+  const detail=el('button',{type:'button',class:'btn btn--outline',text:'View details',onclick:()=>openProductDetail(product)});
+  const action=product.price!=null&&product.price_type!=='quote'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Get a quote',onclick:()=>productEnquiry(product)});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
    el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+product.room}),el('h3',{text:product.name}),
    el('span',{class:'product__detail',text:product.detail}),el('span',{class:'product__meta',text:product.material}),
-   el('div',{class:'product__foot'},[price,action])
+   el('div',{class:'product__foot'},[price]),el('div',{class:'product__actions'},[detail,action])
   ])]);
  }));
 }
@@ -123,7 +124,7 @@ async function loadStoreProducts(){
   if(error)throw error;
   if(!data?.length){PRODUCTS.splice(0,PRODUCTS.length);renderProducts();return;}
   const categoryRoom = name => {const n=(name||'').toLowerCase();if(/sofa|chair|living/.test(n))return 'Living';if(/bed|wardrobe/.test(n))return 'Bedroom';if(/dining|table/.test(n))return 'Dining';if(/office/.test(n))return 'Office';if(/door/.test(n))return 'Doors';if(/outdoor|garden|patio|balcony/.test(n))return 'Living';return 'All';};
-  const live=data.map(p=>({id:p.id,name:p.name,room:categoryRoom(p.categories?.name),space_type:p.space_type||'indoor',detail:p.short_description||p.description||'Contact us for product details',material:[p.material,p.dimensions,Array.isArray(p.colors)?p.colors.join(', '):''].filter(Boolean).join(' · '),price:p.price_type==='quote'?null:p.price,image:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0]?.url||null,badge:p.is_bestseller?'Bestseller':p.is_featured?'Featured':''}));
+  const live=data.map(p=>({id:p.id,name:p.name,slug:p.slug,room:categoryRoom(p.categories?.name),category:p.categories?.name||'Furniture',space_type:p.space_type||'indoor',detail:p.short_description||p.description||'Contact us for product details',description:p.description||p.short_description||'Contact our showroom for complete product details.',material:p.material||'Please enquire',dimensions:p.dimensions||'Made to suit your space',colors:Array.isArray(p.colors)?p.colors:[],customization:p.customization||'Please enquire about customisation.',delivery_estimate:p.delivery_estimate||'To be confirmed by showroom',price_type:p.price_type,price:p.price_type==='quote'?null:p.price,image:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0]?.url||null,images:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))||[],badge:p.is_bestseller?'Bestseller':p.is_featured?'Featured':''}));
   PRODUCTS.splice(0,PRODUCTS.length,...live);
   renderProducts();
  }catch(error){console.warn('Could not load live catalogue; showing starter catalogue.',error);}
@@ -133,7 +134,7 @@ function initForm(){
  form.addEventListener('submit',async event=>{
   event.preventDefault();
   const values=new FormData(form),name=String(values.get('name')||'').trim(),phone=String(values.get('phone')||'').trim();
-  const phoneDigits=phone.replace(/\Dg,'');
+  const phoneDigits=phone.replace(/\D/g,'');
   if(phoneDigits.length<10||phoneDigits.length>15){alert('Please enter a valid phone number.');return;}
   submit.disabled=true;submit.textContent='Sending enquiry…';
   const {error}=await supabase.from('custom_inquiries').insert({name,phone,furniture_type:String(values.get('interest')||'Other'),requirements:String(values.get('details')||'').trim()||null,status:'new'});
@@ -144,4 +145,4 @@ function initForm(){
  document.getElementById('send-another').addEventListener('click',()=>{thanks.hidden=true;form.hidden=false;});
 }
 document.getElementById('year').textContent=new Date().getFullYear();
-renderRooms();renderTabs();initCatalogueControls();renderProducts();initForm();loadStoreProducts();
+renderRooms();renderTabs();initCatalogueControls();renderProducts();initForm();initCommerce();loadStoreProducts();
