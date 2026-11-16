@@ -215,3 +215,10 @@ input, textarea, select, button { font: inherit; }
 .inquiry-controls{max-width:100%}.inquiry-controls select{max-width:180px}.order-row{align-items:flex-start}
 @media(max-width:800px){.rooms{grid-template-columns:repeat(2,minmax(0,1fr))}.launch-banner__slides{height:320px}.hero__photo--wide{height:220px}}
 @media(max-width:600px){.launch-banner__slides{height:280px;border-radius:14px}.launch-slide__copy{left:20px;right:20px}.launch-slide__copy h2{font-size:35px}.launch-slide__copy p{font-size:13px;line-height:1.45;margin-bottom:14px}.launch-slide__copy .eyebrow{font-size:10px}.hero{padding-top:30px;padding-bottom:30px;gap:22px}.hero h1{font-size:40px}.hero__photo--wide{height:195px}.hero__photo--small,.hero__card{height:125px}.rooms{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.room__photo{height:115px}.room__body{min-height:82px;padding:10px}.room__name{font-size:17px}.room__items{font-size:11px}.room__body svg{width:17px;flex-shrink:0}.products{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product__photo{height:130px}.product__body{padding:11px;min-height:190px}.product__body h3{font-size:15px;line-height:1.2}.product__detail{font-size:11px;line-height:1.35}.product__meta{font-size:10px}.product__actions{flex-direction:column}.product__actions .btn{width:100%;font-size:11px;min-height:34px}.product__price{font-size:13px}.settings-form{grid-template-columns:1fr}.settings-form button,.settings-form .message{grid-column:auto}}
+
+
+/* Always-visible shopping cart shortcut */
+.floating-cart{position:fixed;right:22px;bottom:22px;z-index:40;display:flex;align-items:center;gap:9px;padding:13px 18px;border:0;border-radius:999px;background:#2f5d46;color:#fff;font:600 15px Inter, sans-serif;box-shadow:0 8px 28px rgba(20,40,28,.24);cursor:pointer;transition:transform .18s,box-shadow .18s}
+.floating-cart:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(20,40,28,.3)}
+.floating-cart b{display:grid;place-items:center;min-width:23px;height:23px;padding:0 6px;border-radius:50%;background:#fff;color:#2f5d46;font-size:12px}
+@media(max-width:600px){.floating-cart{right:14px;bottom:14px;padding:12px 15px}}
