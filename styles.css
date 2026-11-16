@@ -487,3 +487,86 @@ body{
  .section:not(.local-intro):not(.faq-section){padding:28px 16px;border-radius:18px}
  .local-intro,.faq-section{padding-left:18px;padding-right:18px;border-radius:18px}
 }
+
+
+/* Signature storefront header — bold walnut with polished gold accents */
+.header{
+  background:linear-gradient(105deg,#241812 0%,#3B281C 52%,#241812 100%);
+  border-bottom:3px solid #B58A49;
+  box-shadow:0 8px 26px rgba(37,25,16,.18);
+  backdrop-filter:blur(14px);
+}
+.header__inner{
+  min-height:96px;
+  padding-top:14px;
+  padding-bottom:14px;
+  gap:18px 28px;
+}
+.brand{gap:14px;color:#FFF8EB}
+.brand:hover{color:#FFF8EB}
+.brand__mark{
+  width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(circle at 35% 28%,#F4D99B 0%,#D4AD65 48%,#9B6C30 100%);
+  color:#382517;border:2px solid #E7C985;
+  box-shadow:0 0 0 3px rgba(231,201,133,.16),inset 0 0 0 2px rgba(69,43,20,.22);
+  font-family:Georgia,serif;font-size:36px;font-weight:800;
+}
+.brand__mark:after{inset:5px;border-color:rgba(69,43,20,.45)}
+.brand__name{
+  color:#FFF8EB;font-family:Georgia,'Times New Roman',serif;
+  font-size:30px;font-weight:800;letter-spacing:.15em;
+  text-shadow:0 2px 12px rgba(0,0,0,.18);
+}
+.brand__sub{
+  color:#E0BC78;font-size:11px;font-weight:800;
+  letter-spacing:.30em;
+}
+.nav{gap:5px 24px}
+.nav a{
+  position:relative;color:#F8F0E3;font-weight:700;
+  font-size:16px;letter-spacing:.01em;padding:14px 2px;
+  transition:color .18s ease;
+}
+.nav a:after{
+  content:"";position:absolute;left:0;right:100%;bottom:5px;
+  height:2px;background:linear-gradient(90deg,#D5AE69,#F2D99E);
+  transition:right .2s ease;
+}
+.nav a:hover{color:#E8C987}
+.nav a:hover:after{right:0}
+.header-actions{gap:10px}
+.header-call{
+  color:#F8F0E3!important;font-weight:800!important;
+  text-decoration:none;border-bottom:1px solid rgba(224,188,120,.6);
+  padding:9px 3px;
+}
+.header .cart-open{
+  color:#F8F0E3;background:rgba(255,255,255,.06);
+  border:1px solid #B58A49;font-weight:800;
+}
+.header .cart-open:hover{background:rgba(213,174,105,.16);color:#FFE9BD}
+.header .btn--green{
+  background:linear-gradient(135deg,#E6C47D,#B8873F);
+  color:#2B1D13;border:1px solid #F0D99F;
+  font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.18);
+}
+.header .btn--green:hover{
+  background:linear-gradient(135deg,#F0D99F,#C99A50);
+  color:#241812;transform:translateY(-1px);
+}
+@media(max-width:900px){
+ .header__inner{justify-content:center}
+ .nav{justify-content:center}
+ .header-actions{justify-content:center}
+}
+@media(max-width:640px){
+ .header{position:sticky;top:0}
+ .header__inner{min-height:auto;padding-top:12px;padding-bottom:12px;gap:10px}
+ .brand__mark{width:48px;height:48px;font-size:29px}
+ .brand__name{font-size:23px}
+ .brand__sub{font-size:9px;letter-spacing:.23em}
+ .nav{gap:2px 16px}
+ .nav a{font-size:14px;padding:7px 0}
+ .header-actions{gap:8px}
+ .header-actions .btn{min-height:38px;padding:8px 13px;font-size:13px}
+}
