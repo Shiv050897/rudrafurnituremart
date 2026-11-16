@@ -56,7 +56,30 @@ async function loadDashboard(){
  select.replaceChildren(new Option('Choose a category',''),...categories.map(c=>new Option(c.name,c.id)));
  if(selected)select.value=selected;
  renderProducts();
+ await loadInquiries();
 }
+async function loadInquiries(){
+ const root=$('#inquiry-list');
+ const {data,error}=await supabase.from('custom_inquiries').select('id,name,phone,furniture_type,dimensions,material,budget,requirements,status,created_at').order('created_at',{ascending:false}).limit(40);
+ if(error){root.textContent='Could not load enquiries: '+error.message;return;}
+ root.replaceChildren();
+ if(!data?.length){const p=document.createElement('p');p.className='subtle';p.textContent='No customer enquiries yet.';root.append(p);return;}
+ data.forEach(item=>{
+  const row=document.createElement('article');row.className='inquiry-row';
+  const info=document.createElement('div');const title=document.createElement('h3');title.textContent=item.name+' · '+item.furniture_type;
+  const phone=document.createElement('p');phone.textContent=item.phone;
+  const detail=document.createElement('p');detail.textContent=[item.dimensions,item.material,item.budget,item.requirements].filter(Boolean).join(' · ')||'No additional details';
+  const date=document.createElement('small');date.textContent=new Date(item.created_at).toLocaleString('en-IN');
+  info.append(title,phone,detail,date);
+  const controls=document.createElement('div');controls.className='inquiry-controls';
+  const status=document.createElement('select');['new','contacted','quoted','closed'].forEach(v=>status.add(new Option(v[0].toUpperCase()+v.slice(1),v)));status.value=item.status||'new';
+  status.addEventListener('change',async()=>{const {error}=await supabase.from('custom_inquiries').update({status:status.value}).eq('id',item.id);if(error){alert('Could not update enquiry: '+error.message);status.value=item.status||'new';}else item.status=status.value;});
+  const call=document.createElement('a');call.href='tel:'+item.phone.replace(/[^+\\d]/g,'');call.textContent='Call';call.className='secondary-btn';
+  const wa=document.createElement('a');wa.href='https://wa.me/'+item.phone.replace(/\\D/g,'');wa.target='_blank';wa.rel='noopener';wa.textContent='WhatsApp';wa.className='secondary-btn';
+  controls.append(status,call,wa);row.append(info,controls);root.append(row);
+ });
+}
+$('#refresh-inquiries')?.addEventListener('click',loadInquiries);
 function renderProducts(){
  const query=$('#filter-products').value.trim().toLowerCase();
  const list=products.filter(p=>(p.name+' '+(p.categories?.name||'')).toLowerCase().includes(query));
