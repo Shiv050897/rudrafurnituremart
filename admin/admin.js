@@ -57,6 +57,7 @@ async function loadDashboard(){
  if(selected)select.value=selected;
  renderProducts();
  await loadInquiries();
+ await loadOrders();
 }
 async function loadInquiries(){
  const root=$('#inquiry-list');
@@ -80,6 +81,31 @@ async function loadInquiries(){
  });
 }
 $('#refresh-inquiries')?.addEventListener('click',loadInquiries);
+
+async function loadOrders(){
+ const root=$('#order-list');const {data,error}=await supabase.from('orders').select('id,order_number,customer_name,phone,address_line,city,state,pincode,subtotal,delivery_charge,total,payment_method,payment_status,status,created_at,order_items(product_name,quantity,unit_price,line_total)').order('created_at',{ascending:false}).limit(100);
+ if(error){root.textContent='Could not load orders: '+error.message;return;}
+ root.replaceChildren();
+ if(!data?.length){const p=document.createElement('p');p.className='subtle';p.textContent='No orders received yet.';root.append(p);return;}
+ const statuses=['received','confirmed','design_approved','manufacturing','finishing','ready_for_delivery','out_for_delivery','delivered','cancelled'];
+ data.forEach(order=>{
+  const row=document.createElement('article');row.className='inquiry-row order-row';
+  const info=document.createElement('div');const title=document.createElement('h3');title.textContent=order.order_number+' · '+order.customer_name;
+  const items=document.createElement('p');items.textContent=(order.order_items||[]).map(i=>i.product_name+' × '+i.quantity).join(' · ');
+  const address=document.createElement('p');address.textContent=order.address_line+', '+order.city+', '+order.state+' - '+order.pincode;
+  const total=document.createElement('p');total.textContent='Total: '+money(order.total,'fixed')+' · COD · Payment: '+order.payment_status;
+  const date=document.createElement('small');date.textContent=new Date(order.created_at).toLocaleString('en-IN');
+  info.append(title,items,address,total,date);
+  const controls=document.createElement('div');controls.className='inquiry-controls';
+  const status=document.createElement('select');statuses.forEach(v=>status.add(new Option(v.replaceAll('_',' '),v)));status.value=order.status;
+  status.addEventListener('change',async()=>{const {error}=await supabase.from('orders').update({status:status.value}).eq('id',order.id);if(error){alert('Could not update order: '+error.message);status.value=order.status;}else order.status=status.value;});
+  const call=document.createElement('a');call.href='tel:'+order.phone;call.textContent='Call';call.className='secondary-btn';
+  const wa=document.createElement('a');wa.href='https://wa.me/91'+order.phone+'?text='+encodeURIComponent('Hello '+order.customer_name+', regarding your Rudra Furniture Mart order '+order.order_number+'.');wa.target='_blank';wa.rel='noopener';wa.textContent='WhatsApp';wa.className='secondary-btn';
+  controls.append(status,call,wa);row.append(info,controls);root.append(row);
+ });
+}
+$('#refresh-orders')?.addEventListener('click',loadOrders);
+
 function renderProducts(){
  const query=$('#filter-products').value.trim().toLowerCase();
  const list=products.filter(p=>(p.name+' '+(p.categories?.name||'')).toLowerCase().includes(query));
