@@ -120,7 +120,7 @@ function initCatalogueControls(){
 }
 async function loadStoreProducts(){
  try{
-  const {data,error}=await supabase.from('products').select('id,name,short_description,description,material,dimensions,colors,price,price_type,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
+  const {data,error}=await supabase.from('products').select('id,name,slug,short_description,description,material,dimensions,colors,customization,delivery_estimate,price,price_type,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
   if(error)throw error;
   if(!data?.length){PRODUCTS.splice(0,PRODUCTS.length);renderProducts();return;}
   const categoryRoom = name => {const n=(name||'').toLowerCase();if(/sofa|chair|living/.test(n))return 'Living';if(/bed|wardrobe/.test(n))return 'Bedroom';if(/dining|table/.test(n))return 'Dining';if(/office/.test(n))return 'Office';if(/door/.test(n))return 'Doors';if(/outdoor|garden|patio|balcony/.test(n))return 'Living';return 'All';};
