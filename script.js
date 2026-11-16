@@ -161,11 +161,11 @@ function initCatalogueControls(){
 }
 async function loadStoreProducts(){
  try{
-  const {data,error}=await supabase.from('products').select('id,name,slug,short_description,description,material,dimensions,colors,customization,delivery_estimate,price,price_type,price_tier,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
+  const {data,error}=await supabase.from('products').select('id,name,slug,short_description,description,material,dimensions,colors,customization,delivery_estimate,price,price_type,price_tier,size_options,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
   if(error)throw error;
   if(!data?.length){PRODUCTS.splice(0,PRODUCTS.length);renderProducts();return;}
   const categoryRoom = name => {const n=(name||'').toLowerCase();if(/kid|child/.test(n))return 'Kids';if(/sofa|chair|living/.test(n))return 'Living';if(/bed|wardrobe/.test(n))return 'Bedroom';if(/dining|table/.test(n))return 'Dining';if(/office/.test(n))return 'Office';if(/door/.test(n))return 'Doors';if(/outdoor|garden|patio|balcony/.test(n))return 'Living';return 'All';};
-  const live=data.map(p=>({id:p.id,name:p.name,slug:p.slug,room:categoryRoom(p.categories?.name),category:p.categories?.name||'Furniture',space_type:p.space_type||'indoor',detail:p.short_description||p.description||'Contact us for product details',description:p.description||p.short_description||'Contact our showroom for complete product details.',material:p.material||'Please enquire',dimensions:p.dimensions||'Made to suit your space',colors:Array.isArray(p.colors)?p.colors:[],customization:p.customization||'Please enquire about customisation.',delivery_estimate:p.delivery_estimate||'To be confirmed by showroom',price_type:p.price_type,price:p.price_type==='quote'?null:p.price,image:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0]?.url||DEMO_PRODUCT_IMAGES[p.slug]||null,images:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))||[],badge:p.is_bestseller?'Bestseller':p.is_featured?'Featured':''}));
+  const live=data.map(p=>({id:p.id,name:p.name,slug:p.slug,room:categoryRoom(p.categories?.name),category:p.categories?.name||'Furniture',space_type:p.space_type||'indoor',detail:p.short_description||p.description||'Contact us for product details',description:p.description||p.short_description||'Contact our showroom for complete product details.',material:p.material||'Please enquire',dimensions:p.dimensions||'Made to suit your space',colors:Array.isArray(p.colors)?p.colors:[],customization:p.customization||'Please enquire about customisation.',delivery_estimate:p.delivery_estimate||'To be confirmed by showroom',price_type:p.price_type,price:p.price_type==='quote'?null:p.price,size_options:Array.isArray(p.size_options)?p.size_options:[],image:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0]?.url||DEMO_PRODUCT_IMAGES[p.slug]||null,images:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))||[],badge:p.is_bestseller?'Bestseller':p.is_featured?'Featured':''}));
   PRODUCTS.splice(0,PRODUCTS.length,...live);
   renderProducts();
  }catch(error){console.warn('Could not load live catalogue; showing starter catalogue.',error);}
@@ -212,9 +212,9 @@ function initCommerce(){
  document.getElementById('checkout-form').addEventListener('submit',placeCodOrder);
 }
 function refreshUpiDisplay(){const qrWrap=document.getElementById('upi-qr-wrap'),qrImage=document.getElementById('upi-qr-image');if(qrWrap&&qrImage){qrWrap.hidden=!storePayment.upi_qr_url; if(storePayment.upi_qr_url)qrImage.src=storePayment.upi_qr_url;}const chosen=document.querySelector('input[name="payment_method"]:checked')?.value==='upi';const panel=document.getElementById('upi-payment-info');if(!panel)return;panel.hidden=!chosen;document.getElementById('upi-id-display').textContent=storePayment.upi_id?storePayment.upi_id+' · '+storePayment.upi_name:'UPI payment is not configured yet. Please choose Cash on Delivery or contact the showroom.';const link=document.getElementById('upi-app-link');const total=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);link.href=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR':'#';link.hidden=!storePayment.upi_id;}
-function addToCart(product){
+function addToCart(product,selectedSize='',customDimensions=''){
  if(!product.id||product.price==null||product.price_type!=='fixed'){productEnquiry(product);return;}
- const found=cart.find(x=>x.id===product.id);if(found)found.quantity=Math.min(100,found.quantity+1);else cart.push({id:product.id,quantity:1});
+ const found=cart.find(x=>x.id===product.id&&x.selected_size===selectedSize&&x.custom_dimensions===customDimensions);if(found)found.quantity=Math.min(100,found.quantity+1);else cart.push({id:product.id,quantity:1,selected_size:selectedSize,custom_dimensions:customDimensions});
  saveCart();renderCart();openLayer('cart-modal');
 }
 function cartProducts(){return cart.map(item=>({...item,product:PRODUCTS.find(p=>p.id===item.id)})).filter(x=>x.product&&x.product.price!=null&&x.product.price_type==='fixed');}
@@ -224,7 +224,7 @@ function renderCart(){
  document.getElementById('checkout-start').disabled=false;document.getElementById('checkout-start').textContent='Proceed to checkout';
  items.forEach(({id,quantity,product})=>root.append(el('article',{class:'cart-line'},[
   photo(product.image,product.name,'cart-line__image'),el('div',{class:'cart-line__info'},[
-   el('strong',{text:product.name}),el('span',{class:'muted',text:inr(product.price)+' each'}),
+   el('strong',{text:product.name}),el('span',{class:'muted',text:(item.selected_size?'Size: '+item.selected_size:'')+(item.custom_dimensions?' · Custom: '+item.custom_dimensions:'')}),el('span',{class:'muted',text:inr(product.price)+' each'}),
    el('div',{class:'quantity-control'},[
     el('button',{type:'button',text:'−',onclick:()=>changeQuantity(id,quantity-1)}),el('span',{text:String(quantity)}),
     el('button',{type:'button',text:'+',onclick:()=>changeQuantity(id,quantity+1)}),
@@ -251,7 +251,7 @@ async function placeCodOrder(event){
  const method=String(values.get('payment_method')||'cod');if(method==='upi'&&!storePayment.upi_id){msg.textContent='UPI is not configured yet. Please select Cash on Delivery or contact the showroom.';return;}
  const notes=[String(values.get('notes')||'').trim(),method==='upi'&&String(values.get('upi_reference')||'').trim()?'UPI reference: '+String(values.get('upi_reference')).trim():''].filter(Boolean).join(' | ')||null;
  const customer={full_name:String(values.get('full_name')).trim(),phone,email:String(values.get('email')||'').trim()||null,address_line:String(values.get('address_line')).trim(),city:String(values.get('city')).trim(),state:String(values.get('state')).trim(),pincode:String(values.get('pincode')).trim(),notes};
- const {data,error}=await supabase.rpc('place_order',{p_customer:customer,p_items:items.map(x=>({product_id:x.id,quantity:x.quantity})),p_payment_method:method,p_coupon:null});
+ const {data,error}=await supabase.rpc('place_order',{p_customer:customer,p_items:items.map(x=>({product_id:x.id,quantity:x.quantity,selected_size:x.selected_size||null,custom_dimensions:x.custom_dimensions||null})),p_payment_method:method,p_coupon:null});
  button.disabled=false;button.textContent='Place COD order';
  if(error){msg.textContent=error.message||'We could not place your order. Please check your details and try again.';return;}
  cart=[];saveCart();form.hidden=true;
@@ -280,10 +280,11 @@ function openProductDetail(product){
   gallery.append(viewer,thumbs);
  }else gallery.append(el('div',{class:'detail-no-photo',text:'Product photographs will be added soon'}));
  const buyable=product.price!=null&&product.price_type==='fixed';
+ const sizeWrap=el('div',{class:'product-size-picker'}),sizeLabel=el('label',{text:'Choose size'}),sizeSelect=el('select',{class:'product-size-select'});sizeSelect.append(new Option('Select a size',''));(product.size_options||[]).forEach(size=>sizeSelect.append(new Option(size,size)));if(!(product.size_options||[]).length)sizeSelect.append(new Option('Standard size','Standard size'));sizeLabel.append(sizeSelect);const customLabel=el('label',{text:'Need a custom size? Enter dimensions'}),customInput=el('input',{type:'text',maxlength:120,placeholder:'e.g. 6 ft × 6.5 ft, or your required dimensions'});customLabel.append(customInput);sizeWrap.append(sizeLabel,customLabel);
  root.append(gallery,el('div',{class:'detail-copy'},[
   el('span',{class:'eyebrow',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.category||product.room)}),
   el('h2',{id:'detail-title',text:product.name}),el('p',{class:'detail-price',text:displayProductPrice(product)}),
-  el('p',{text:product.description||product.detail}),
+  el('p',{text:product.description||product.detail}),sizeWrap,
   el('dl',{class:'detail-specs'},[
    el('dt',{text:'Material'}),el('dd',{text:product.material||'Please enquire'}),
    el('dt',{text:'Dimensions'}),el('dd',{text:product.dimensions||'Made to suit your space'}),
@@ -291,7 +292,7 @@ function openProductDetail(product){
    el('dt',{text:'Customisation'}),el('dd',{text:product.customization||'Please enquire'}),
    el('dt',{text:'Delivery estimate'}),el('dd',{text:product.delivery_estimate||'To be confirmed'})
   ]),
-  buyable?el('button',{class:'btn btn--green btn--lg',type:'button',text:'Add to cart',onclick:()=>{closeLayer('product-modal');addToCart(product);}}):el('button',{class:'btn btn--green btn--lg',type:'button',text:'Request a quote',onclick:()=>{closeLayer('product-modal');productEnquiry(product);}})
+  buyable?el('button',{class:'btn btn--green btn--lg',type:'button',text:'Add to cart',onclick:()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;if(!chosen&&!custom){alert('Please choose a size or enter your custom dimensions.');return;}closeLayer('product-modal');addToCart(product,chosen,custom);}}):el('button',{class:'btn btn--green btn--lg',type:'button',text:'Request a quote',onclick:()=>{closeLayer('product-modal');productEnquiry(product);}})
  ]));openLayer('product-modal');
 }
 
