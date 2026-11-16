@@ -86,6 +86,7 @@ function formatPrice(price){
  if(price==null)return 'Request a quote';
  return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(price);
 }
+function displayProductPrice(product){if(product.price==null||product.price_type==='quote')return 'Request a quote';const amount=formatPrice(product.price);return product.price_type==='starting'?'Starting from '+amount:amount;}
 function productEnquiry(product){
  const select=document.querySelector('#quote-form select[name="interest"]');
  const details=document.querySelector('#quote-form textarea[name="details"]');
@@ -114,9 +115,9 @@ function renderProducts(){
  root.replaceChildren(...list.map(product=>{
   const image=photo(product.image,product.name,'product__photo');
   if(product.badge)image.append(el('span',{class:'product__badge',text:product.badge}));
-  const price=el('span',{class:product.price==null?'product__price product__price--quote':'product__price',text:formatPrice(product.price)});
+  const price=el('span',{class:product.price==null||product.price_type==='quote'?'product__price product__price--quote':'product__price',text:displayProductPrice(product)});
   const detail=el('button',{type:'button',class:'btn btn--outline',text:'View details',onclick:()=>openProductDetail(product)});
-  const action=product.price!=null&&product.price_type!=='quote'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Get a quote',onclick:()=>productEnquiry(product)});
+  const action=product.price!=null&&product.price_type==='fixed'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Get a quote',onclick:()=>productEnquiry(product)});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
    el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+product.room}),el('h3',{text:product.name}),
    el('span',{class:'product__detail',text:product.detail}),el('span',{class:'product__meta',text:product.material}),
@@ -183,11 +184,11 @@ function initCommerce(){
 }
 function refreshUpiDisplay(){const chosen=document.querySelector('input[name="payment_method"]:checked')?.value==='upi';const panel=document.getElementById('upi-payment-info');if(!panel)return;panel.hidden=!chosen;document.getElementById('upi-id-display').textContent=storePayment.upi_id?storePayment.upi_id+' · '+storePayment.upi_name:'UPI payment is not configured yet. Please choose Cash on Delivery or contact the showroom.';const link=document.getElementById('upi-app-link');const total=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);link.href=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR':'#';link.hidden=!storePayment.upi_id;}
 function addToCart(product){
- if(!product.id||product.price==null||product.price_type==='quote'){productEnquiry(product);return;}
+ if(!product.id||product.price==null||product.price_type!=='fixed'){productEnquiry(product);return;}
  const found=cart.find(x=>x.id===product.id);if(found)found.quantity=Math.min(100,found.quantity+1);else cart.push({id:product.id,quantity:1});
  saveCart();renderCart();openLayer('cart-modal');
 }
-function cartProducts(){return cart.map(item=>({...item,product:PRODUCTS.find(p=>p.id===item.id)})).filter(x=>x.product&&x.product.price!=null&&x.product.price_type!=='quote');}
+function cartProducts(){return cart.map(item=>({...item,product:PRODUCTS.find(p=>p.id===item.id)})).filter(x=>x.product&&x.product.price!=null&&x.product.price_type==='fixed');}
 function renderCart(){
  const root=document.getElementById('cart-items'),summary=document.getElementById('cart-summary'),items=cartProducts();root.replaceChildren();summary.replaceChildren();
  if(!items.length){root.append(el('p',{class:'muted',text:'Your cart is empty. Add a fixed-price product to continue.'}));document.getElementById('checkout-start').disabled=true;document.getElementById('checkout-start').textContent='Your cart is empty';return;}
@@ -239,10 +240,10 @@ function openProductDetail(product){
  if(!photos.length&&product.image)photos.push(product.image);
  if(photos.length)photos.forEach((url,i)=>gallery.append(el('img',{src:url,alt:product.name+' photo '+(i+1),loading:'lazy'})));
  else gallery.append(el('div',{class:'detail-no-photo',text:'Product photographs will be added soon'}));
- const buyable=product.price!=null&&product.price_type!=='quote';
+ const buyable=product.price!=null&&product.price_type==='fixed';
  root.append(gallery,el('div',{class:'detail-copy'},[
   el('span',{class:'eyebrow',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.category||product.room)}),
-  el('h2',{id:'detail-title',text:product.name}),el('p',{class:'detail-price',text:buyable?inr(product.price):'Price on request'}),
+  el('h2',{id:'detail-title',text:product.name}),el('p',{class:'detail-price',text:displayProductPrice(product)}),
   el('p',{text:product.description||product.detail}),
   el('dl',{class:'detail-specs'},[
    el('dt',{text:'Material'}),el('dd',{text:product.material||'Please enquire'}),
