@@ -594,3 +594,5 @@ body{
 .detail-gallery__thumb.is-active{border:2px solid #b88b47;box-shadow:0 0 0 2px #b88b4733}
 .detail-gallery__thumb img{width:100%;height:100%;object-fit:cover;border-radius:6px}
 @media(min-width:760px){.detail-gallery{grid-template-columns:minmax(0,1fr)}}
+
+.product-size-picker{display:grid;gap:12px;margin:18px 0;padding:15px;border:1px solid var(--line);border-radius:13px;background:#faf6ef}.product-size-picker label{display:grid;gap:7px;font-size:14px;font-weight:650;color:var(--ink)}.product-size-picker select,.product-size-picker input{width:100%;min-height:44px;border:1px solid #d8c7ae;border-radius:9px;padding:10px 12px;background:#fffdf8;color:var(--ink)}.product-size-picker input::placeholder{color:#9b8d7b}.upi-payment-info #upi-qr-wrap{display:grid;justify-items:start;gap:8px;margin:14px 0}.upi-payment-info #upi-qr-image{width:220px;max-width:100%;height:auto;aspect-ratio:1;object-fit:contain;background:#fff}
