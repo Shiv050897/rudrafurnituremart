@@ -123,6 +123,17 @@ function printInvoice(order){
  const win=window.open('','_blank','width=900,height=700');if(!win){alert('Please allow pop-ups to generate the bill.');return;}win.document.open();win.document.write(doc);win.document.close();
 }
 
+
+async function loadCustomerPayments(){
+ const root=$('#customer-payment-list');if(!root)return;root.textContent='Loading payment submissions…';
+ const {data,error}=await supabase.from('customer_payment_submissions').select('*,orders(order_number,customer_name,phone,total)').order('submitted_at',{ascending:false});
+ if(error){root.textContent='Could not load payment submissions: '+error.message;return;}
+ root.replaceChildren();const pending=(data||[]).filter(p=>p.status==='pending');
+ if(!pending.length){root.textContent='No UPI payment submissions awaiting verification.';return;}
+ pending.forEach(p=>{const row=document.createElement('article');row.className='inquiry-row';const info=document.createElement('div');const title=document.createElement('h3');title.textContent=(p.orders?.order_number||'Order')+' · '+Number(p.amount).toLocaleString('en-IN',{style:'currency',currency:'INR'});const details=document.createElement('p');details.textContent=(p.orders?.customer_name||'Customer')+' · '+p.phone+' · UTR: '+p.transaction_reference;info.append(title,details);const controls=document.createElement('div');controls.className='inquiry-controls';['verified','rejected'].forEach(status=>{const btn=document.createElement('button');btn.className='secondary-btn';btn.textContent=status==='verified'?'Verify payment':'Reject';btn.addEventListener('click',async()=>{if(!confirm('Mark this payment as '+status+'?'))return;const {error}=await supabase.from('customer_payment_submissions').update({status}).eq('id',p.id);if(error){alert(error.message);return;}if(status==='verified'){const {error:oe}=await supabase.from('orders').update({payment_status:'paid'}).eq('id',p.order_id);if(oe){alert('Payment record updated, but order status failed: '+oe.message);return;}}loadCustomerPayments();loadOrders?.();});controls.append(btn);});row.append(info,controls);root.append(row);});
+}
+$('#refresh-customer-payments')?.addEventListener('click',loadCustomerPayments);
+
 async function loadOrders(){
  const root=$('#order-list');root.textContent='Loading orders…';
  try{
