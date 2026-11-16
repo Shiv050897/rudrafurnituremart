@@ -25,20 +25,24 @@ async function checkAdmin(){
  await loadDashboard();
 }
 async function loadStoreSettings(){
- const {data,error}=await supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name','phone']);
+ const {data,error}=await supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name','phone','upi_qr_url','business_gstin','business_legal_name','business_address']);
  if(error){message('#settings-message','Could not load settings: '+error.message);return;}
  const settings=Object.fromEntries((data||[]).map(x=>[x.key,x.value]));
  const form=$('#store-settings-form');if(!form)return;
  form.elements.upi_id.value=String(settings.upi_id||'').replace(/^"|"$/g,'');
  form.elements.upi_name.value=String(settings.upi_name||'Rudra Furniture Mart').replace(/^"|"$/g,'');
  form.elements.phone.value=String(settings.phone||'').replace(/^"|"$/g,'');
+ form.elements.business_gstin.value=String(settings.business_gstin||'').replace(/^"|"$/g,'');
+ form.elements.business_legal_name.value=String(settings.business_legal_name||'Rudra Furniture Mart').replace(/^"|"$/g,'');
+ form.elements.business_address.value=String(settings.business_address||'Vishwakarmanagar, Bataubeer, Shahpur Badlapur, Jaunpur, Uttar Pradesh - 222125, India').replace(/^"|"$/g,'');
 }
 $('#store-settings-form')?.addEventListener('submit',async event=>{
  event.preventDefault();const form=event.currentTarget,button=form.querySelector('button[type=submit]');button.disabled=true;button.textContent='Saving…';
  const values=new FormData(form);
- const entries=[['upi_id',String(values.get('upi_id')).trim()],['upi_name',String(values.get('upi_name')).trim()],['phone',String(values.get('phone')).trim()]];
+ const entries=[['upi_id',String(values.get('upi_id')).trim()],['upi_name',String(values.get('upi_name')).trim()],['phone',String(values.get('phone')).trim()],['business_gstin',String(values.get('business_gstin')).trim().toUpperCase()],['business_legal_name',String(values.get('business_legal_name')).trim()],['business_address',String(values.get('business_address')).trim()]];
+ const qr=form.elements.upi_qr.files[0]; if(qr){if(qr.size>3*1024*1024||!['image/png','image/jpeg','image/webp'].includes(qr.type)){message('#settings-message','QR must be PNG, JPG or WebP under 3 MB.');button.disabled=false;button.textContent='Save store settings';return;}const path='payment/upi-qr-'+Date.now()+'.'+(qr.type==='image/png'?'png':qr.type==='image/webp'?'webp':'jpg');const {error:upErr}=await supabase.storage.from('product-images').upload(path,qr,{contentType:qr.type,upsert:true});if(upErr){message('#settings-message','Could not upload QR: '+upErr.message);button.disabled=false;button.textContent='Save store settings';return;}const {data:pub}=supabase.storage.from('product-images').getPublicUrl(path);entries.push(['upi_qr_url',pub.publicUrl]);}
  for(const [key,value] of entries){const {error}=await supabase.from('site_settings').upsert({key,value:JSON.stringify(value)},{onConflict:'key'});if(error){message('#settings-message','Could not save '+key+': '+error.message);button.disabled=false;button.textContent='Save store settings';return;}}
- message('#settings-message','Payment and contact settings saved.',true);button.disabled=false;button.textContent='Save store settings';
+ message('#settings-message','Payment, QR and billing settings saved.',true);button.disabled=false;button.textContent='Save store settings';
 });
 function showLogin(){ $('#login-panel').hidden=false;$('#dashboard').hidden=true; }
 $('#login-form').addEventListener('submit',async event=>{
@@ -83,7 +87,7 @@ async function loadDashboard(){
   $('#active-total').textContent=products.filter(p=>p.is_active).length;
   renderProducts();
  }
- await Promise.allSettled([loadInquiries(),loadOrders(),loadStoreSettings()]);
+ await Promise.allSettled([loadInquiries(),loadOrders(),loadStoreSettings(),loadBillRequests()]);
 }
 
 async function loadInquiries(){
@@ -216,3 +220,58 @@ async function deleteProduct(p){
 }
 supabase.auth.onAuthStateChange((_event,session)=>{if(!session)showLogin();});
 checkAdmin();
+
+
+async function loadBillRequests(){
+ const root=$('#bill-request-list');if(!root)return;root.textContent='Loading bill requests…';
+ const {data,error}=await supabase.from('bill_requests').select('*,orders(order_number,subtotal,delivery_charge,discount,total,payment_method,payment_status,status,created_at,order_items(product_name,quantity,unit_price,line_total))').order('requested_at',{ascending:false}).limit(100);
+ if(error){root.textContent='Could not load bill requests: '+error.message;return;}
+ root.replaceChildren();
+ if(!data?.length){root.textContent='No bill requests yet.';return;}
+ data.forEach(req=>{
+  const order=req.orders||{}, paid=order.payment_status==='paid';
+  const row=document.createElement('article');row.className='inquiry-row';
+  const info=document.createElement('div');const title=document.createElement('h3');title.textContent=(order.order_number||'Order')+' · '+req.customer_name;
+  const detail=document.createElement('p');detail.textContent=req.phone+' · '+(req.email||'No email')+' · Payment '+(order.payment_status||'unknown');
+  const itemText=document.createElement('p');itemText.textContent=(order.order_items||[]).map(x=>x.product_name+' × '+x.quantity).join(' | ');
+  const status=document.createElement('small');status.textContent='Bill request: '+req.request_status+' · '+new Date(req.requested_at).toLocaleString('en-IN');
+  info.append(title,detail,itemText,status);row.append(info);
+  const controls=document.createElement('div');controls.className='inquiry-controls';
+  const edit=document.createElement('button');edit.className='secondary-btn';edit.textContent='Edit bill & tax';
+  edit.addEventListener('click',async()=>{
+   const lines=(req.bill_data?.items?.length?req.bill_data.items:(order.order_items||[]).map(x=>({name:x.product_name,quantity:x.quantity,unit_price:Number(x.unit_price),cgst_rate:0,sgst_rate:0})));
+   const bill={items:lines,delivery_charge:Number(req.bill_data?.delivery_charge??order.delivery_charge??0),discount:Number(req.bill_data?.discount??order.discount??0),notes:req.bill_data?.notes||''};
+   for(const line of bill.items){
+    const price=prompt('Unit price for '+line.name+' (₹)',String(line.unit_price));if(price===null)return;line.unit_price=Math.max(0,Number(price)||0);
+    const cg=prompt('CGST rate % for '+line.name+' (0 if not applicable)',String(line.cgst_rate||0));if(cg===null)return;line.cgst_rate=Math.max(0,Number(cg)||0);
+    const sg=prompt('SGST rate % for '+line.name+' (0 if not applicable)',String(line.sgst_rate||0));if(sg===null)return;line.sgst_rate=Math.max(0,Number(sg)||0);
+   }
+   const delivery=prompt('Delivery charge (₹)',String(bill.delivery_charge));if(delivery===null)return;bill.delivery_charge=Math.max(0,Number(delivery)||0);
+   const discount=prompt('Discount (₹)',String(bill.discount));if(discount===null)return;bill.discount=Math.max(0,Number(discount)||0);
+   const {error}=await supabase.from('bill_requests').update({bill_data:bill,updated_at:new Date().toISOString()}).eq('id',req.id);
+   if(error){alert('Could not save bill: '+error.message);return;}req.bill_data=bill;alert('Bill details saved.');loadBillRequests();
+  });
+  const payment=document.createElement('select');[['pending','Payment pending'],['paid','Payment received'],['failed','Payment failed'],['refunded','Refunded']].forEach(([v,l])=>payment.add(new Option(l,v)));payment.value=order.payment_status||'pending';
+  payment.addEventListener('change',async()=>{const {error}=await supabase.from('orders').update({payment_status:payment.value}).eq('id',req.order_id);if(error){alert(error.message);payment.value=order.payment_status||'pending';}else{order.payment_status=payment.value;loadBillRequests();}});
+  const approve=document.createElement('button');approve.className='primary-btn';approve.textContent=req.request_status==='approved'?'Reprint approved bill':'Approve & release bill';approve.disabled=!paid;
+  approve.title=paid?'Approve downloadable bill':'Mark payment received only after checking bank/UPI statement';
+  approve.addEventListener('click',async()=>{
+   if(order.payment_status!=='paid'){alert('Bill release is blocked until payment is verified.');return;}
+   const items=req.bill_data?.items?.length?req.bill_data.items:(order.order_items||[]).map(x=>({name:x.product_name,quantity:x.quantity,unit_price:Number(x.unit_price),cgst_rate:0,sgst_rate:0}));
+   const bill={items,delivery_charge:Number(req.bill_data?.delivery_charge??order.delivery_charge??0),discount:Number(req.bill_data?.discount??order.discount??0)};
+   const invoice=req.invoice_number||('RFM-BILL-'+String(order.order_number||req.id).replace(/[^A-Za-z0-9-]/g,''));
+   const {error}=await supabase.from('bill_requests').update({request_status:'approved',bill_data:bill,invoice_number:invoice,approved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',req.id);
+   if(error){alert('Could not approve bill: '+error.message);return;}
+   printCustomerBill(req,order,bill,invoice);loadBillRequests();
+  });
+  controls.append(payment,edit,approve);row.append(controls);root.append(row);
+ });
+}
+$('#refresh-bills')?.addEventListener('click',loadBillRequests);
+function printCustomerBill(req,order,bill,invoice){
+ const settings={};const subtotal=bill.items.reduce((sum,x)=>sum+x.unit_price*x.quantity,0);
+ let cgst=0,sgst=0;const rows=bill.items.map((x,i)=>{const base=x.unit_price*x.quantity,c=base*(Number(x.cgst_rate)||0)/100,s=base*(Number(x.sgst_rate)||0)/100;cgst+=c;sgst+=s;return '<tr><td>'+(i+1)+'</td><td>'+escapeHtml(x.name)+'</td><td>'+x.quantity+'</td><td>'+money(x.unit_price,'fixed')+'</td><td>'+Number(x.cgst_rate||0).toFixed(2)+'%</td><td>'+money(c,'fixed')+'</td><td>'+Number(x.sgst_rate||0).toFixed(2)+'%</td><td>'+money(s,'fixed')+'</td><td>'+money(base+c+s,'fixed')+'</td></tr>';}).join('');
+ const total=Math.max(0,subtotal+cgst+sgst+Number(bill.delivery_charge||0)-Number(bill.discount||0));
+ const doc='<!doctype html><html><head><meta charset="utf-8"><title>'+escapeHtml(invoice)+'</title><style>@page{size:A4;margin:14mm}body{font:13px Inter,Arial;color:#30251d;margin:0;background:#fff}header{padding:22px 24px;background:#2b211b;color:#fff;display:flex;justify-content:space-between;border-bottom:5px solid #c49a4a}h1{font:700 27px Georgia;margin:0;color:#f0d79e}header p{margin:5px 0;color:#f1e5d3}.tag{letter-spacing:3px;color:#e6c47d;font-size:10px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:22px 0}.meta section{background:#f8f3ea;padding:14px;border:1px solid #eadcc6;border-radius:8px}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#4b3525;color:#fff;padding:9px 6px}td{border:1px solid #e5dbce;padding:8px 5px}.totals{width:300px;margin:18px 0 0 auto}.totals div{display:flex;justify-content:space-between;padding:5px 8px;border-bottom:1px solid #eee}.grand{background:#f2e5cd;font-size:17px;font-weight:bold}.foot{margin-top:35px;padding-top:14px;border-top:2px solid #c49a4a;color:#76695d;font-size:11px}.stamp{color:#6c4b25;font-weight:bold;letter-spacing:1px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><header><div><div class="tag">CRAFTED FOR YOUR HOME · SINCE 1999</div><h1>RUDRA</h1><strong>F U R N I T U R E&nbsp; M A R T</strong><p>Vishwakarmanagar, Bataubeer, Shahpur Badlapur,<br>Jaunpur, Uttar Pradesh – 222125, India</p><p>+91 94517 13626 · rudrafurnituremartsupport@gmail.com</p></div><div><h2>TAX INVOICE / BILL</h2><h3>'+escapeHtml(invoice)+'</h3><p>'+new Date().toLocaleDateString('en-IN')+'</p><div class="stamp">PAYMENT VERIFIED</div></div></header><div class="meta"><section><b>BILL TO</b><p>'+escapeHtml(req.customer_name)+'<br>'+escapeHtml(req.phone)+'<br>'+escapeHtml(req.email||'')+'</p><p>'+escapeHtml(order.address_line||'')+'<br>'+escapeHtml(order.city||'')+', '+escapeHtml(order.state||'')+' - '+escapeHtml(order.pincode||'')+'</p></section><section><b>ORDER DETAILS</b><p>Order: '+escapeHtml(order.order_number)+'<br>Payment: '+escapeHtml(order.payment_method||'UPI')+' · '+escapeHtml(order.payment_status)+'<br>Bill date: '+new Date().toLocaleDateString('en-IN')+'</p></section></div><table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Rate</th><th>CGST</th><th>CGST amt</th><th>SGST</th><th>SGST amt</th><th>Line total</th></tr></thead><tbody>'+rows+'</tbody></table><div class="totals"><div><span>Taxable value</span><b>'+money(subtotal,'fixed')+'</b></div><div><span>CGST</span><b>'+money(cgst,'fixed')+'</b></div><div><span>SGST</span><b>'+money(sgst,'fixed')+'</b></div><div><span>Delivery</span><b>'+money(bill.delivery_charge,'fixed')+'</b></div><div><span>Discount</span><b>- '+money(bill.discount,'fixed')+'</b></div><div class="grand"><span>Grand total</span><b>'+money(total,'fixed')+'</b></div></div><p class="foot">Thank you for choosing Rudra Furniture Mart. This bill was approved by the showroom after payment verification. GST details should be issued only where applicable and supported by the seller’s registration and product classification.</p><script>window.onload=()=>window.print()</script></body></html>';
+ const win=window.open('','_blank','width=1000,height=800');if(!win){alert('Please allow pop-ups to print/download the bill.');return;}win.document.open();win.document.write(doc);win.document.close();
+}
