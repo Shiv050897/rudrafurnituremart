@@ -133,7 +133,7 @@ function initForm(){
  form.addEventListener('submit',async event=>{
   event.preventDefault();
   const values=new FormData(form),name=String(values.get('name')||'').trim(),phone=String(values.get('phone')||'').trim();
-  const phoneDigits=phone.replace(/\\D/g,'');
+  const phoneDigits=phone.replace(/\Dg,'');
   if(phoneDigits.length<10||phoneDigits.length>15){alert('Please enter a valid phone number.');return;}
   submit.disabled=true;submit.textContent='Sending enquiry…';
   const {error}=await supabase.from('custom_inquiries').insert({name,phone,furniture_type:String(values.get('interest')||'Other'),requirements:String(values.get('details')||'').trim()||null,status:'new'});
