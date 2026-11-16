@@ -428,3 +428,62 @@ a:hover{color:#5E4325}
 .brand__name{font-family:Georgia,'Times New Roman',serif;font-size:27px;line-height:1;letter-spacing:.12em;text-transform:uppercase;color:#3B2B20}
 .brand__sub{font-size:10px;letter-spacing:.28em;font-weight:700;color:#98703A}
 @media(max-width:600px){.brand{gap:9px}.brand__mark{width:46px;height:46px;font-size:27px}.brand__name{font-size:22px}.brand__sub{font-size:9px;letter-spacing:.2em}}
+
+
+/* Add warm, visible colour to the page while keeping the gold/walnut brand */
+body{
+ background:
+  radial-gradient(ellipse at 8% 18%,rgba(219,184,125,.20),transparent 32%),
+  radial-gradient(ellipse at 92% 44%,rgba(190,133,103,.12),transparent 30%),
+  linear-gradient(180deg,#F8F2E8 0%,#F1E8DA 46%,#F8F3EA 100%);
+}
+.hero{
+ background:linear-gradient(125deg,#F1E3CB 0%,#F8F1E5 52%,#E9D8C1 100%);
+ border:1px solid rgba(167,123,63,.16);
+ border-radius:26px;
+ padding:48px 34px;
+ margin-top:24px;
+ margin-bottom:24px;
+}
+.promise{
+ background:linear-gradient(100deg,#E9D7B9 0%,#F2E8D7 52%,#E7DCCB 100%);
+ border-top:1px solid #E0CCAA;
+ border-bottom:1px solid #E0CCAA;
+}
+.section:not(.local-intro):not(.faq-section){
+ background:linear-gradient(135deg,rgba(255,252,245,.72),rgba(239,226,205,.48));
+ border:1px solid rgba(167,123,63,.12);
+ border-radius:24px;
+ padding:42px 28px;
+ margin-top:28px;
+ margin-bottom:28px;
+}
+.local-intro{
+ background:linear-gradient(120deg,#F0E2CF,#F8F1E6 70%);
+ border-radius:24px;
+ padding:38px 30px 54px;
+ border:1px solid rgba(167,123,63,.14);
+}
+.faq-section{
+ background:linear-gradient(135deg,#EDE0CF,#F7F0E5);
+ border-radius:24px;
+ padding:36px 28px 54px;
+ margin-top:24px;
+}
+.faq-grid details{background:rgba(255,253,248,.9);border-color:#E0D1BA}
+.room,.product,.contact{
+ background:linear-gradient(160deg,#FFFEFA 0%,#F8F1E6 100%);
+ border-color:#E3D3BB;
+}
+.room__body{background:linear-gradient(90deg,#FFFDF8,#F4E8D5)}
+.product__body{background:linear-gradient(180deg,#FFFEFB,#F7F0E5)}
+.custom{
+ background:linear-gradient(115deg,#241A14 0%,#493323 55%,#6B4A2B 100%);
+}
+.steps li{background:linear-gradient(145deg,#62462E,#3B2B20)}
+.launch-banner__slides{box-shadow:0 16px 42px rgba(54,37,22,.18)}
+@media(max-width:640px){
+ .hero{padding:28px 18px;margin-top:14px;border-radius:18px}
+ .section:not(.local-intro):not(.faq-section){padding:28px 16px;border-radius:18px}
+ .local-intro,.faq-section{padding-left:18px;padding-right:18px;border-radius:18px}
+}
