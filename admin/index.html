@@ -38,6 +38,8 @@
             <div class="two-col"><label>Material<input name="material" placeholder="Sheesham wood"></label><label>Dimensions<input name="dimensions" placeholder="e.g. 6 × 6.5 ft"></label></div>
             <div class="two-col"><label>Price type<select name="price_type"><option value="quote">Request a quote</option><option value="fixed">Fixed price</option><option value="starting">Starting from</option></select></label><label>Price (₹)<input name="price" type="number" min="0" step="1" placeholder="Leave blank for quote"></label></div>
             <label>Colours / finishes<input name="colors" placeholder="Natural teak, walnut, white"></label>
+            <label>Customisation options<input name="customization" placeholder="Size, polish, fabric options"></label>
+            <label>Delivery estimate<input name="delivery_estimate" placeholder="e.g. 3–4 weeks"></label>
             <label>Product photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG or WebP · maximum 5 MB. You can add another photo when editing later.</small></label>
             <div class="checks"><label><input name="is_featured" type="checkbox"> Featured product</label><label><input name="is_bestseller" type="checkbox"> Bestseller</label><label><input name="is_active" type="checkbox" checked> Visible on website</label></div>
             <button class="primary-btn" id="save-product" type="submit">Save product</button><p id="form-message" class="message" role="status"></p>
