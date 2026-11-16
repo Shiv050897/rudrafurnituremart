@@ -45,7 +45,7 @@
         <a href="#custom">Custom orders</a>
         <a href="#visit">Visit us</a>
       </nav>
-      <a href="#contact" class="btn btn--green">Get a quote</a>
+      <div class="header-actions"><button type="button" class="btn btn--outline cart-open" id="open-cart">Cart <span id="cart-count">0</span></button><a href="#contact" class="btn btn--green">Get a quote</a></div>
     </div>
   </header>
 
@@ -113,6 +113,7 @@
         <span class="catalogue-count" id="product-count" aria-live="polite"></span>
       </div>
       <div class="products" id="product-grid"></div>
+      <p class="catalogue-note">Add-to-cart and Cash on Delivery are available for products with confirmed fixed prices. Custom-made and quotation-only products can be enquired about directly.</p>
       <p class="catalogue-note">Prices are shown only where confirmed. For made-to-measure furniture and products without a listed price, request a personalised quote.</p>
     </section>
 
@@ -187,6 +188,10 @@
     </section>
   </main>
 
+  <div class="commerce-overlay" id="product-modal" hidden><div class="commerce-panel product-detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title"><button class="commerce-close" type="button" data-close="product-modal" aria-label="Close">×</button><div id="product-detail-content"></div></div></div>
+  <div class="commerce-overlay" id="cart-modal" hidden><div class="commerce-panel cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-title"><button class="commerce-close" type="button" data-close="cart-modal" aria-label="Close">×</button><div class="eyebrow">YOUR SELECTION</div><h2 id="cart-title">Shopping cart</h2><div id="cart-items"></div><div id="cart-summary"></div><button class="btn btn--green btn--lg" id="checkout-start" type="button">Proceed to checkout</button><p class="muted cart-hint">Cash on Delivery is available for eligible fixed-price items.</p></div></div>
+  <div class="commerce-overlay" id="checkout-modal" hidden><div class="commerce-panel checkout-panel" role="dialog" aria-modal="true" aria-labelledby="checkout-title"><button class="commerce-close" type="button" data-close="checkout-modal" aria-label="Close">×</button><div class="eyebrow">SECURE ORDER REQUEST</div><h2 id="checkout-title">Delivery details</h2><form id="checkout-form" class="form checkout-form"><div class="form__row"><label>Full name<input name="full_name" required maxlength="120" autocomplete="name"></label><label>Mobile number<input name="phone" type="tel" required maxlength="16" placeholder="10-digit mobile number" autocomplete="tel"></label></div><label>Email (optional)<input name="email" type="email" maxlength="254" autocomplete="email"></label><label>Full delivery address<textarea name="address_line" rows="3" required minlength="5" maxlength="300" autocomplete="street-address"></textarea></label><div class="form__row"><label>City<input name="city" required maxlength="80" value="Jaunpur" autocomplete="address-level2"></label><label>State<input name="state" required maxlength="80" value="Uttar Pradesh" autocomplete="address-level1"></label><label>PIN code<input name="pincode" inputmode="numeric" pattern="[1-9][0-9]{5}" maxlength="6" required autocomplete="postal-code"></label></div><label>Delivery instructions (optional)<textarea name="notes" rows="2" maxlength="1000"></textarea></label><div class="payment-choice"><strong>Payment method</strong><label><input type="radio" name="payment_method" value="cod" checked> Cash on Delivery</label><small>Pay in cash when your order is delivered. Our team may call to confirm your order.</small></div><div id="checkout-total" class="checkout-total"></div><button class="btn btn--green btn--lg" type="submit">Place COD order</button><p id="checkout-message" class="message" role="status"></p></form><div id="order-success" hidden></div></div></div>
+
   <footer class="footer">
     <div class="container footer__inner">
       <div class="footer__brand">
@@ -206,6 +211,6 @@
     </div>
   </footer>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
