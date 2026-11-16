@@ -68,7 +68,7 @@ async function loadDashboard(){
  productRoot.textContent='Loading products…';
  const tasks=await Promise.allSettled([
   supabase.from('categories').select('id,name').eq('is_active',true).order('sort_order'),
-  supabase.from('products').select('id,category_id,name,slug,short_description,description,material,dimensions,colors,price_type,price,space_type,is_featured,is_bestseller,is_active,product_images(id,url,alt,sort_order),categories(name)').order('created_at',{ascending:false})
+  supabase.from('products').select('id,category_id,name,slug,short_description,description,material,dimensions,colors,price_type,price,price_tier,space_type,is_featured,is_bestseller,is_active,product_images(id,url,alt,sort_order),categories(name)').order('created_at',{ascending:false})
  ]);
  const catResult=tasks[0].status==='fulfilled'?tasks[0].value:{error:tasks[0].reason};
  const prodResult=tasks[1].status==='fulfilled'?tasks[1].value:{error:tasks[1].reason};
@@ -177,7 +177,7 @@ function resetForm(){
 }
 function editProduct(p){
  const form=$('#product-form');
- for(const key of ['id','name','category_id','short_description','description','material','dimensions','colors','customization','delivery_estimate','price_type','price','space_type'])form.elements[key].value=p[key]??'';
+ for(const key of ['id','name','category_id','short_description','description','material','dimensions','colors','customization','delivery_estimate','price_type','price','price_tier','space_type'])form.elements[key].value=p[key]??'';
  for(const key of ['is_featured','is_bestseller','is_active'])form.elements[key].checked=!!p[key];
  form.elements.photo.value='';$('#editor-title').textContent='Edit product';$('#save-product').textContent='Update product';message('#form-message','Editing '+p.name,true);
  form.scrollIntoView({behavior:'smooth',block:'start'});
@@ -186,7 +186,7 @@ $('#product-form').addEventListener('submit',async event=>{
  event.preventDefault();const button=$('#save-product');button.disabled=true;button.textContent='Saving…';message('#form-message','');
  try{
   const form=new FormData(event.currentTarget),id=form.get('id'),name=String(form.get('name')).trim(),priceType=form.get('price_type'),rawPrice=form.get('price');
-  const payload={name,slug:slugify(name),category_id:form.get('category_id'),space_type:form.get('space_type')||'indoor',short_description:form.get('short_description')||null,description:form.get('description')||null,material:form.get('material')||null,dimensions:form.get('dimensions')||null,colors:String(form.get('colors')||'').split(',').map(x=>x.trim()).filter(Boolean),customization:form.get('customization')||null,delivery_estimate:form.get('delivery_estimate')||null,price_type:priceType,price:rawPrice===''?null:Number(rawPrice),is_featured:form.has('is_featured'),is_bestseller:form.has('is_bestseller'),is_active:form.has('is_active')};
+  const payload={name,slug:slugify(name),category_id:form.get('category_id'),space_type:form.get('space_type')||'indoor',short_description:form.get('short_description')||null,description:form.get('description')||null,material:form.get('material')||null,dimensions:form.get('dimensions')||null,colors:String(form.get('colors')||'').split(',').map(x=>x.trim()).filter(Boolean),customization:form.get('customization')||null,delivery_estimate:form.get('delivery_estimate')||null,price_type:priceType,price:rawPrice===''?null:Number(rawPrice),price_tier:form.get('price_tier')||'general',is_featured:form.has('is_featured'),is_bestseller:form.has('is_bestseller'),is_active:form.has('is_active')};
   if(priceType==='quote')payload.price=null;
   if(id){const {error}=await supabase.from('products').update(payload).eq('id',id);if(error)throw error;}
   else{const {data,error}=await supabase.from('products').insert(payload).select('id').single();if(error)throw error;payload.id=data.id;}
