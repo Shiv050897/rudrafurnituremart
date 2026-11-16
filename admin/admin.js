@@ -68,7 +68,7 @@ async function loadDashboard(){
  productRoot.textContent='Loading products…';
  const tasks=await Promise.allSettled([
   supabase.from('categories').select('id,name').eq('is_active',true).order('sort_order'),
-  supabase.from('products').select('id,category_id,name,slug,short_description,description,material,dimensions,colors,price_type,price,price_tier,space_type,is_featured,is_bestseller,is_active,product_images(id,url,alt,sort_order),categories(name)').order('created_at',{ascending:false})
+  supabase.from('products').select('id,category_id,name,slug,short_description,description,material,dimensions,colors,price_type,price,price_tier,size_options,space_type,is_featured,is_bestseller,is_active,product_images(id,url,alt,sort_order),categories(name)').order('created_at',{ascending:false})
  ]);
  const catResult=tasks[0].status==='fulfilled'?tasks[0].value:{error:tasks[0].reason};
  const prodResult=tasks[1].status==='fulfilled'?tasks[1].value:{error:tasks[1].reason};
