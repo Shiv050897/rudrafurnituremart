@@ -163,6 +163,7 @@ renderRooms();renderTabs();initCatalogueControls();initLaunchBanner();renderProd
 
 const CART_KEY='rudra_furniture_cart_v1';
 let cart=[];
+let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart'};
 const inr=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(value)||0);
 function readCart(){try{cart=JSON.parse(localStorage.getItem(CART_KEY)||'[]').filter(x=>x&&x.id&&Number.isInteger(x.quantity)&&x.quantity>0);}catch{cart=[];}saveCart();}
 function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(cart));const badge=document.getElementById('cart-count');if(badge)badge.textContent=cart.reduce((n,x)=>n+x.quantity,0);}
@@ -170,6 +171,9 @@ function openLayer(id){document.getElementById(id).hidden=false;document.body.cl
 function closeLayer(id){document.getElementById(id).hidden=true;if(!document.querySelector('.commerce-overlay:not([hidden])'))document.body.classList.remove('modal-open');}
 function initCommerce(){
  readCart();
+ supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name']).then(({data})=>{(data||[]).forEach(x=>storePayment[x.key]=String(x.value||'').replace(/^\"|\"$/g,''));refreshUpiDisplay();});
+ document.querySelectorAll('input[name="payment_method"]').forEach(r=>r.addEventListener('change',refreshUpiDisplay));
+ document.getElementById('copy-upi')?.addEventListener('click',async()=>{if(!storePayment.upi_id)return;try{await navigator.clipboard.writeText(storePayment.upi_id);document.getElementById('copy-upi').textContent='Copied';}catch{document.getElementById('upi-id-display').textContent=storePayment.upi_id;}});
  document.getElementById('open-cart').addEventListener('click',()=>{renderCart();openLayer('cart-modal');});
  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeLayer(b.dataset.close)));
  document.querySelectorAll('.commerce-overlay').forEach(layer=>layer.addEventListener('click',e=>{if(e.target===layer)closeLayer(layer.id);}));
@@ -177,6 +181,7 @@ function initCommerce(){
  document.getElementById('checkout-start').addEventListener('click',startCheckout);
  document.getElementById('checkout-form').addEventListener('submit',placeCodOrder);
 }
+function refreshUpiDisplay(){const chosen=document.querySelector('input[name="payment_method"]:checked')?.value==='upi';const panel=document.getElementById('upi-payment-info');if(!panel)return;panel.hidden=!chosen;document.getElementById('upi-id-display').textContent=storePayment.upi_id?storePayment.upi_id+' · '+storePayment.upi_name:'UPI payment is not configured yet. Please choose Cash on Delivery or contact the showroom.';const link=document.getElementById('upi-app-link');const total=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);link.href=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR':'#';link.hidden=!storePayment.upi_id;}
 function addToCart(product){
  if(!product.id||product.price==null||product.price_type==='quote'){productEnquiry(product);return;}
  const found=cart.find(x=>x.id===product.id);if(found)found.quantity=Math.min(100,found.quantity+1);else cart.push({id:product.id,quantity:1});
@@ -204,7 +209,7 @@ function changeQuantity(id,quantity){if(quantity<=0)cart=cart.filter(x=>x.id!==i
 function startCheckout(){
  if(!cartProducts().length)return;closeLayer('cart-modal');
  const form=document.getElementById('checkout-form');form.hidden=false;document.getElementById('order-success').hidden=true;document.getElementById('checkout-message').textContent='';
- const subtotal=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);document.getElementById('checkout-total').textContent='Cart subtotal: '+inr(subtotal)+' · Cash on Delivery';
+ const subtotal=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);document.getElementById('checkout-total').textContent='Cart subtotal: '+inr(subtotal)+' · Delivery charges confirmed by showroom';refreshUpiDisplay();
  openLayer('checkout-modal');
 }
 async function placeCodOrder(event){
@@ -213,15 +218,17 @@ async function placeCodOrder(event){
  if(phone.length!==10||!/^[6-9]/.test(phone)){msg.textContent='Enter a valid 10-digit Indian mobile number.';return;}
  const items=cartProducts();if(!items.length){msg.textContent='Your cart is empty.';return;}
  button.disabled=true;button.textContent='Placing order…';msg.textContent='';
- const customer={full_name:String(values.get('full_name')).trim(),phone,email:String(values.get('email')||'').trim()||null,address_line:String(values.get('address_line')).trim(),city:String(values.get('city')).trim(),state:String(values.get('state')).trim(),pincode:String(values.get('pincode')).trim(),notes:String(values.get('notes')||'').trim()||null};
- const {data,error}=await supabase.rpc('place_order',{p_customer:customer,p_items:items.map(x=>({product_id:x.id,quantity:x.quantity})),p_payment_method:'cod',p_coupon:null});
+ const method=String(values.get('payment_method')||'cod');if(method==='upi'&&!storePayment.upi_id){msg.textContent='UPI is not configured yet. Please select Cash on Delivery or contact the showroom.';return;}
+ const notes=[String(values.get('notes')||'').trim(),method==='upi'&&String(values.get('upi_reference')||'').trim()?'UPI reference: '+String(values.get('upi_reference')).trim():''].filter(Boolean).join(' | ')||null;
+ const customer={full_name:String(values.get('full_name')).trim(),phone,email:String(values.get('email')||'').trim()||null,address_line:String(values.get('address_line')).trim(),city:String(values.get('city')).trim(),state:String(values.get('state')).trim(),pincode:String(values.get('pincode')).trim(),notes};
+ const {data,error}=await supabase.rpc('place_order',{p_customer:customer,p_items:items.map(x=>({product_id:x.id,quantity:x.quantity})),p_payment_method:method,p_coupon:null});
  button.disabled=false;button.textContent='Place COD order';
  if(error){msg.textContent=error.message||'We could not place your order. Please check your details and try again.';return;}
  cart=[];saveCart();form.hidden=true;
  const success=document.getElementById('order-success');success.hidden=false;success.replaceChildren(el('div',{class:'order-success'},[
   el('div',{class:'order-success__mark',text:'✓'}),el('h3',{text:'Your order request is received!'}),
   el('p',{text:'Order number: '+data.order_number}),el('p',{text:'Order total: '+inr(data.total)}),
-  el('p',{text:'Payment: Cash on Delivery. Our team will call you to confirm your order and delivery.'}),
+  el('p',{text:method==='cod'?'Payment: Cash on Delivery. Our team will call you to confirm your order and delivery.':'Payment: UPI selected. Your order is pending payment verification by our showroom.'}),
   el('a',{class:'btn btn--green',href:'https://wa.me/919451713626?text='+encodeURIComponent('Hello Rudra Furniture Mart, I placed order '+data.order_number+'. Please confirm my order.'),target:'_blank',rel:'noopener',text:'Message us on WhatsApp'}),
   el('button',{class:'btn btn--outline',type:'button',text:'Continue shopping',onclick:()=>closeLayer('checkout-modal')})
  ]));
