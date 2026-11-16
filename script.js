@@ -86,7 +86,8 @@ function visibleProducts(){
  let list=PRODUCTS.filter(product=>{
   const roomMatch=activeRoom==='All'||product.room===activeRoom;
   const text=(product.name+' '+product.room+' '+product.detail+' '+product.material).toLowerCase();
-  const spaceMatch=activeSpace==='all'||activeSpace===product.space_type||product.space_type==='both';\n  return roomMatch&&spaceMatch&&text.includes(searchTerm);
+  const spaceMatch=activeSpace==='all'||activeSpace===product.space_type||product.space_type==='both';
+  return roomMatch&&spaceMatch&&text.includes(searchTerm);
  });
  if(sortMode==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
  if(sortMode==='price-low')list.sort((a,b)=>(a.price??Infinity)-(b.price??Infinity));
