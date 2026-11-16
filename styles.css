@@ -615,3 +615,9 @@ body{
  .header-actions .btn{flex:1;justify-content:center;white-space:nowrap;min-height:42px;padding:9px 10px;font-size:13px}
  .strip__inner{font-size:11px;gap:8px}
 }
+
+@media(max-width:640px){
+ .header{transition:transform .24s ease,opacity .2s ease;will-change:transform}
+ .header.header--scroll-hidden{transform:translateY(-110%);opacity:0;pointer-events:none}
+ body{scroll-padding-top:12px}
+}
