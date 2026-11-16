@@ -60,22 +60,32 @@ $('#filter-products').addEventListener('input',renderProducts);
 $('#reset-form').addEventListener('click',resetForm);
 
 async function loadDashboard(){
- const [catResult,prodResult]=await Promise.all([
+ const productRoot=$('#product-list');
+ productRoot.textContent='Loading products…';
+ const tasks=await Promise.allSettled([
   supabase.from('categories').select('id,name').eq('is_active',true).order('sort_order'),
   supabase.from('products').select('id,category_id,name,slug,short_description,description,material,dimensions,colors,price_type,price,space_type,is_featured,is_bestseller,is_active,product_images(id,url,alt,sort_order),categories(name)').order('created_at',{ascending:false})
  ]);
- if(catResult.error){message('#form-message','Could not load categories: '+catResult.error.message);return;}
- if(prodResult.error){$('#product-list').textContent='Could not load products: '+prodResult.error.message;return;}
- categories=catResult.data||[];products=prodResult.data||[];
- $('#category-total').textContent=categories.length;$('#product-total').textContent=products.length;$('#active-total').textContent=products.filter(p=>p.is_active).length;
- const select=$('#category-select'),selected=select.value;
- select.replaceChildren(new Option('Choose a category',''),...categories.map(c=>new Option(c.name,c.id)));
- if(selected)select.value=selected;
- renderProducts();
- await loadInquiries();
- await loadOrders();
- await loadStoreSettings();
+ const catResult=tasks[0].status==='fulfilled'?tasks[0].value:{error:tasks[0].reason};
+ const prodResult=tasks[1].status==='fulfilled'?tasks[1].value:{error:tasks[1].reason};
+ if(catResult.error){message('#form-message','Could not load categories: '+(catResult.error.message||catResult.error));$('#category-total').textContent='—';}
+ else{
+  categories=catResult.data||[];
+  const select=$('#category-select'),selected=select.value;
+  select.replaceChildren(new Option('Choose a category',''),...categories.map(c=>new Option(c.name,c.id)));
+  if(selected)select.value=selected;
+  $('#category-total').textContent=categories.length;
+ }
+ if(prodResult.error){productRoot.textContent='Could not load products: '+(prodResult.error.message||prodResult.error);$('#product-total').textContent='—';$('#active-total').textContent='—';}
+ else{
+  products=prodResult.data||[];
+  $('#product-total').textContent=products.length;
+  $('#active-total').textContent=products.filter(p=>p.is_active).length;
+  renderProducts();
+ }
+ await Promise.allSettled([loadInquiries(),loadOrders(),loadStoreSettings()]);
 }
+
 async function loadInquiries(){
  const root=$('#inquiry-list');
  const {data,error}=await supabase.from('custom_inquiries').select('id,name,phone,furniture_type,dimensions,material,budget,requirements,status,created_at').order('created_at',{ascending:false}).limit(40);
