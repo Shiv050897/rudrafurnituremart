@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=b2615524">
+  <link rel="stylesheet" href="styles.css?v=mobilemenu1">
 </head>
 <body>
 
@@ -39,7 +39,8 @@
           <span class="brand__sub">Furniture Mart</span>
         </span>
       </a>
-      <nav aria-label="Main" class="nav">
+      <button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-expanded="false" aria-controls="primary-navigation"><span class="mobile-menu-icon" aria-hidden="true">☰</span><span class="mobile-menu-label">Menu</span></button>
+      <nav id="primary-navigation" aria-label="Main" class="nav">
         <a href="#collections">Collections</a>
         <a href="#products">Products</a>
         <a href="#custom">Custom orders</a>
@@ -229,6 +230,6 @@
     </div>
   </footer>
 
-  <script type="module" src="script.js?v=b2615524"></script>
+  <script type="module" src="script.js?v=mobilemenu1"></script>
 </body>
 </html>
