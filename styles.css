@@ -356,3 +356,65 @@ a:hover{color:#65451F}
 .order-success__mark{background:#F1E3C6;color:#80571F}
 .photo-fallback{background:linear-gradient(145deg,#F0E6D5,#E1D2B9)!important;color:#71552F!important}
 .photo-fallback__mark{background:linear-gradient(145deg,#C49A4A,#80571F);color:#fff}
+
+
+/* Refined luxury finish — warm ivory, walnut and restrained antique-gold accents */
+:root{
+ --ground:#F6F3ED;
+ --surface:#FFFDF9;
+ --ink:#29231E;
+ --ink-2:#51473E;
+ --muted:#786F65;
+ --line:#E6DED2;
+ --green:#3B2B20;
+ --green-dark:#241A14;
+ --green-mid:#5A4030;
+ --teak:#A77B3F;
+ --sand:#D8BD83;
+}
+body{background:var(--ground);color:var(--ink)}
+a{color:#8A632F}
+a:hover{color:#5E4325}
+.header{background:rgba(246,243,237,.97);border-bottom:1px solid var(--line)}
+.brand__mark{background:#3B2B20;border:1px solid #B18A50;color:#F8F3E9}
+.strip,.footer{background:#241A14}
+.strip{color:#F6F3ED}
+.strip a,.footer a,.footer__brand p{color:#E5D9C8}
+.footer__bottom{border-color:rgba(216,189,131,.22);color:#BEB1A0}
+.btn--green,.floating-cart{background:#3B2B20;color:#fff;border:1px solid #B18A50}
+.btn--green:hover,.floating-cart:hover{background:#241A14;color:#fff;border-color:#D8BD83}
+.btn--outline{background:transparent;border-color:#A77B3F;color:#4B3828}
+.btn--outline:hover{background:#3B2B20;border-color:#3B2B20;color:#fff}
+.btn--light{background:#EFE7D9;color:#3B2B20}
+.eyebrow,.product__price,.detail-price{color:#98703A}
+.promise{background:#EEE8DE;border-color:var(--line)}
+.product,.room,.contact{border-color:var(--line)}
+.product{background:var(--surface)}
+.product__badge{background:#3B2B20;color:#F8F3E9;border:1px solid rgba(216,189,131,.55)}
+.product__price--quote{color:#98703A}
+.tab{border-color:#B18A50;color:#4B3828;background:#FFFCF7}
+.tab[aria-pressed="true"]{background:#3B2B20;border-color:#3B2B20;color:#fff}
+.hero__card{background:linear-gradient(145deg,#6B5038,#3B2B20);color:#FFF9EF}
+.custom{background:#241A14;color:#F6F3ED}
+.steps li{background:#493729}
+.steps__num{color:#D8BD83}
+.form input:focus,.form select:focus,.form textarea:focus{outline-color:rgba(167,123,63,.22);border-color:#A77B3F}
+.map-link{background:linear-gradient(135deg,#F0E8DA,#E7DCC8);color:#5A4030}
+.map-link:hover{background:#E7DCC8;color:#3B2B20}
+.launch-banner__slides{background:#241A14}
+.launch-slide__shade{background:linear-gradient(90deg,rgba(35,25,18,.78) 0%,rgba(35,25,18,.48) 42%,rgba(35,25,18,.08) 82%),linear-gradient(0deg,rgba(0,0,0,.16),transparent 48%)}
+.launch-banner__arrows button{color:#3B2B20}
+.launch-banner__arrows button:hover,.launch-banner__dots button.is-active{background:#A77B3F}
+.floating-cart{box-shadow:0 8px 24px rgba(36,26,20,.2)}
+.floating-cart b{background:#E8D4AA;color:#3B2B20}
+.commerce-overlay{background:rgba(30,23,18,.62)}
+.commerce-panel{background:#F9F6F0;border:1px solid #DCCDB7}
+.commerce-close{background:#EEE5D7;color:#3B2B20}
+.checkout-total{background:#EFE6D7;color:#5A4030}
+.order-success__mark{background:#EDE2CE;color:#72552E}
+.photo-fallback{background:linear-gradient(145deg,#EEE7DC,#DED2C0)!important;color:#69543A!important}
+.photo-fallback__mark{background:#3B2B20;border:1px solid #B18A50;color:#F8F3E9}
+.catalogue-search input,.catalogue-sort select{border-color:#E0D6C8;background:#FFFDF9}
+.product,.room{box-shadow:0 5px 18px rgba(47,35,25,.045)}
+.product:hover,.room:hover{box-shadow:0 12px 28px rgba(47,35,25,.09)}
+.floating-cart{background:#3B2B20}
