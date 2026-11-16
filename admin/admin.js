@@ -24,6 +24,22 @@ async function checkAdmin(){
  $('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#signed-in-as').textContent=userData.user.email;
  await loadDashboard();
 }
+async function loadStoreSettings(){
+ const {data,error}=await supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name','phone']);
+ if(error){message('#settings-message','Could not load settings: '+error.message);return;}
+ const settings=Object.fromEntries((data||[]).map(x=>[x.key,x.value]));
+ const form=$('#store-settings-form');if(!form)return;
+ form.elements.upi_id.value=String(settings.upi_id||'').replace(/^"|"$/g,'');
+ form.elements.upi_name.value=String(settings.upi_name||'Rudra Furniture Mart').replace(/^"|"$/g,'');
+ form.elements.phone.value=String(settings.phone||'').replace(/^"|"$/g,'');
+}
+$('#store-settings-form')?.addEventListener('submit',async event=>{
+ event.preventDefault();const form=event.currentTarget,button=form.querySelector('button[type=submit]');button.disabled=true;button.textContent='Saving…';
+ const values=new FormData(form);
+ const entries=[['upi_id',String(values.get('upi_id')).trim()],['upi_name',String(values.get('upi_name')).trim()],['phone',String(values.get('phone')).trim()]];
+ for(const [key,value] of entries){const {error}=await supabase.from('site_settings').upsert({key,value:JSON.stringify(value)},{onConflict:'key'});if(error){message('#settings-message','Could not save '+key+': '+error.message);button.disabled=false;button.textContent='Save store settings';return;}}
+ message('#settings-message','Payment and contact settings saved.',true);button.disabled=false;button.textContent='Save store settings';
+});
 function showLogin(){ $('#login-panel').hidden=false;$('#dashboard').hidden=true; }
 $('#login-form').addEventListener('submit',async event=>{
  event.preventDefault();const button=event.submitter;button.disabled=true;button.textContent='Signing in…';message('#login-message','');
@@ -58,6 +74,7 @@ async function loadDashboard(){
  renderProducts();
  await loadInquiries();
  await loadOrders();
+ await loadStoreSettings();
 }
 async function loadInquiries(){
  const root=$('#inquiry-list');
@@ -82,6 +99,14 @@ async function loadInquiries(){
 }
 $('#refresh-inquiries')?.addEventListener('click',loadInquiries);
 
+
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function printInvoice(order){
+ const rows=(order.order_items||[]).map((item,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(item.product_name)+'</td><td>'+item.quantity+'</td><td>'+money(item.unit_price,'fixed')+'</td><td>'+money(item.line_total,'fixed')+'</td></tr>').join('');
+ const doc='<!doctype html><html><head><meta charset="utf-8"><title>Invoice '+escapeHtml(order.order_number)+'</title><style>body{font:14px Arial,sans-serif;color:#222;margin:32px}header{display:flex;justify-content:space-between;border-bottom:2px solid #2f5d46;padding-bottom:16px}h1{color:#1e3f2f;margin:0}small{color:#666}.meta{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:24px 0}table{width:100%;border-collapse:collapse;margin:20px 0}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background:#edf2ed}.totals{margin-left:auto;width:280px}.totals div{display:flex;justify-content:space-between;padding:6px}.grand{font-size:18px;font-weight:bold;border-top:2px solid #2f5d46}.foot{margin-top:50px;border-top:1px solid #ddd;padding-top:14px;color:#666}@media print{button{display:none}body{margin:15mm}}</style></head><body><header><div><h1>Rudra Furniture Mart</h1><p>Shahpur Badlapur, Jaunpur, Uttar Pradesh</p><p>Phone: +91 94517 13626</p></div><div><h2>INVOICE / ORDER BILL</h2><strong>'+escapeHtml(order.order_number)+'</strong><p>'+new Date(order.created_at).toLocaleDateString('en-IN')+'</p></div></header><div class="meta"><div><strong>Bill to</strong><p>'+escapeHtml(order.customer_name)+'<br>'+escapeHtml(order.phone)+'<br>'+escapeHtml(order.email||'')+'</p><p>'+escapeHtml(order.address_line)+'<br>'+escapeHtml(order.city)+', '+escapeHtml(order.state)+' - '+escapeHtml(order.pincode)+'</p></div><div><strong>Payment details</strong><p>Method: '+escapeHtml(String(order.payment_method||'').toUpperCase())+'<br>Status: '+escapeHtml(order.payment_status)+'<br>Order status: '+escapeHtml(order.status)+'</p></div></div><table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>'+rows+'</tbody></table><div class="totals"><div><span>Subtotal</span><strong>'+money(order.subtotal,'fixed')+'</strong></div><div><span>Delivery</span><strong>'+money(order.delivery_charge,'fixed')+'</strong></div><div><span>Discount</span><strong>- '+money(order.discount,'fixed')+'</strong></div><div class="grand"><span>Total</span><strong>'+money(order.total,'fixed')+'</strong></div></div><p class="foot">Thank you for choosing Rudra Furniture Mart. Please retain this bill for your records. This is a computer-generated order bill.</p><script>window.onload=()=>window.print()</script></body></html>';
+ const win=window.open('','_blank','width=900,height=700');if(!win){alert('Please allow pop-ups to generate the bill.');return;}win.document.open();win.document.write(doc);win.document.close();
+}
+
 async function loadOrders(){
  const root=$('#order-list');const {data,error}=await supabase.from('orders').select('id,order_number,customer_name,phone,address_line,city,state,pincode,subtotal,delivery_charge,total,payment_method,payment_status,status,created_at,order_items(product_name,quantity,unit_price,line_total)').order('created_at',{ascending:false}).limit(100);
  if(error){root.textContent='Could not load orders: '+error.message;return;}
@@ -93,15 +118,17 @@ async function loadOrders(){
   const info=document.createElement('div');const title=document.createElement('h3');title.textContent=order.order_number+' · '+order.customer_name;
   const items=document.createElement('p');items.textContent=(order.order_items||[]).map(i=>i.product_name+' × '+i.quantity).join(' · ');
   const address=document.createElement('p');address.textContent=order.address_line+', '+order.city+', '+order.state+' - '+order.pincode;
-  const total=document.createElement('p');total.textContent='Total: '+money(order.total,'fixed')+' · COD · Payment: '+order.payment_status;
+  const total=document.createElement('p');total.textContent='Total: '+money(order.total,'fixed')+' · '+String(order.payment_method||'').toUpperCase()+' · Payment: '+order.payment_status;
   const date=document.createElement('small');date.textContent=new Date(order.created_at).toLocaleString('en-IN');
   info.append(title,items,address,total,date);
   const controls=document.createElement('div');controls.className='inquiry-controls';
   const status=document.createElement('select');statuses.forEach(v=>status.add(new Option(v.replaceAll('_',' '),v)));status.value=order.status;
   status.addEventListener('change',async()=>{const {error}=await supabase.from('orders').update({status:status.value}).eq('id',order.id);if(error){alert('Could not update order: '+error.message);status.value=order.status;}else order.status=status.value;});
   const call=document.createElement('a');call.href='tel:'+order.phone;call.textContent='Call';call.className='secondary-btn';
+  const payment=document.createElement('select');[['pending','Payment pending'],['paid','Payment received'],['failed','Payment failed'],['refunded','Refunded']].forEach(([v,label])=>payment.add(new Option(label,v)));payment.value=order.payment_status||'pending';payment.addEventListener('change',async()=>{const {error}=await supabase.from('orders').update({payment_status:payment.value}).eq('id',order.id);if(error){alert('Could not update payment status: '+error.message);payment.value=order.payment_status||'pending';}else order.payment_status=payment.value;});
   const wa=document.createElement('a');wa.href='https://wa.me/91'+order.phone+'?text='+encodeURIComponent('Hello '+order.customer_name+', regarding your Rudra Furniture Mart order '+order.order_number+'.');wa.target='_blank';wa.rel='noopener';wa.textContent='WhatsApp';wa.className='secondary-btn';
-  controls.append(status,call,wa);row.append(info,controls);root.append(row);
+  const bill=document.createElement('button');bill.type='button';bill.className='secondary-btn';bill.textContent='Generate bill';bill.addEventListener('click',()=>printInvoice(order));
+  controls.append(status,payment,call,wa,bill);row.append(info,controls);root.append(row);
  });
 }
 $('#refresh-orders')?.addEventListener('click',loadOrders);
