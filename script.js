@@ -144,7 +144,7 @@ function renderProducts(){
   if(product.badge)image.append(el('span',{class:'product__badge',text:product.badge}));
   const price=el('span',{class:product.price==null||product.price_type==='quote'?'product__price product__price--quote':'product__price',text:displayProductPrice(product)});
   const detail=el('button',{type:'button',class:'btn btn--outline',text:'View details',onclick:()=>openProductDetail(product)});
-  const action=product.price!=null&&product.price_type==='fixed'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Get a quote',onclick:()=>productEnquiry(product)});
+  const action=product.price!=null&&product.price_type==='fixed'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Enquiry',onclick:()=>productEnquiry(product)});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
    el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.price_tier==='premium'?'Premium collection':'General collection')+' · '+product.room}),el('h3',{text:product.name}),
    el('span',{class:'product__detail',text:product.detail}),el('span',{class:'product__meta',text:product.material}),
