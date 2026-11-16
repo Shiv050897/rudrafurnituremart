@@ -211,7 +211,23 @@ function initCommerce(){
  document.getElementById('checkout-start').addEventListener('click',startCheckout);
  document.getElementById('checkout-form').addEventListener('submit',placeCodOrder);
 }
-function refreshUpiDisplay(){const qrWrap=document.getElementById('upi-qr-wrap'),qrImage=document.getElementById('upi-qr-image');if(qrWrap&&qrImage){qrWrap.hidden=!storePayment.upi_qr_url; if(storePayment.upi_qr_url)qrImage.src=storePayment.upi_qr_url;}const chosen=document.querySelector('input[name="payment_method"]:checked')?.value==='upi';const panel=document.getElementById('upi-payment-info');if(!panel)return;panel.hidden=!chosen;document.getElementById('upi-id-display').textContent=storePayment.upi_id?storePayment.upi_id+' · '+storePayment.upi_name:'UPI payment is not configured yet. Please choose Cash on Delivery or contact the showroom.';const link=document.getElementById('upi-app-link');const total=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);link.href=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR':'#';link.hidden=!storePayment.upi_id;}
+function refreshUpiDisplay(){
+ const qrWrap=document.getElementById('upi-qr-wrap'),qrImage=document.getElementById('upi-qr-image');
+ const chosen=document.querySelector('input[name="payment_method"]:checked')?.value==='upi';
+ const panel=document.getElementById('upi-payment-info');if(!panel)return;
+ panel.hidden=!chosen;
+ const total=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);
+ const upiUri=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR&tn='+encodeURIComponent('Rudra Furniture Mart order'):'';
+ document.getElementById('upi-id-display').textContent=storePayment.upi_id?storePayment.upi_id+' · '+storePayment.upi_name:'UPI payment is not configured yet. Please choose Cash on Delivery or contact the showroom.';
+ if(qrWrap&&qrImage){
+  qrWrap.hidden=!chosen||!storePayment.upi_id;
+  if(chosen&&storePayment.upi_id){
+   qrImage.src=storePayment.upi_qr_url||('https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data='+encodeURIComponent(upiUri));
+   const caption=document.getElementById('upi-qr-caption');if(caption)caption.textContent=storePayment.upi_qr_url?'Scan Rudra Furniture Mart’s saved UPI QR. Confirm the payable amount in your UPI app.':'Scan this QR to pay '+inr(total)+' to '+storePayment.upi_name+'.';
+  }
+ }
+ const link=document.getElementById('upi-app-link');link.href=upiUri||'#';link.hidden=!storePayment.upi_id;
+}
 function addToCart(product,selectedSize='',customDimensions=''){
  if(!product.id||product.price==null||product.price_type!=='fixed'){productEnquiry(product);return;}
  const found=cart.find(x=>x.id===product.id&&x.selected_size===selectedSize&&x.custom_dimensions===customDimensions);if(found)found.quantity=Math.min(100,found.quantity+1);else cart.push({id:product.id,quantity:1,selected_size:selectedSize,custom_dimensions:customDimensions});
@@ -222,9 +238,9 @@ function renderCart(){
  const root=document.getElementById('cart-items'),summary=document.getElementById('cart-summary'),items=cartProducts();root.replaceChildren();summary.replaceChildren();
  if(!items.length){root.append(el('p',{class:'muted',text:'Your cart is empty. Add a fixed-price product to continue.'}));document.getElementById('checkout-start').disabled=true;document.getElementById('checkout-start').textContent='Your cart is empty';return;}
  document.getElementById('checkout-start').disabled=false;document.getElementById('checkout-start').textContent='Proceed to checkout';
- items.forEach(({id,quantity,product})=>root.append(el('article',{class:'cart-line'},[
+ items.forEach(({id,quantity,product,selected_size,custom_dimensions})=>root.append(el('article',{class:'cart-line'},[
   photo(product.image,product.name,'cart-line__image'),el('div',{class:'cart-line__info'},[
-   el('strong',{text:product.name}),el('span',{class:'muted',text:(item.selected_size?'Size: '+item.selected_size:'')+(item.custom_dimensions?' · Custom: '+item.custom_dimensions:'')}),el('span',{class:'muted',text:inr(product.price)+' each'}),
+   el('strong',{text:product.name}),el('span',{class:'muted',text:(selected_size?'Size: '+selected_size:'')+(custom_dimensions?' · Custom: '+custom_dimensions:'')}),el('span',{class:'muted',text:inr(product.price)+' each'}),
    el('div',{class:'quantity-control'},[
     el('button',{type:'button',text:'−',onclick:()=>changeQuantity(id,quantity-1)}),el('span',{text:String(quantity)}),
     el('button',{type:'button',text:'+',onclick:()=>changeQuantity(id,quantity+1)}),
@@ -248,11 +264,11 @@ async function placeCodOrder(event){
  if(phone.length!==10||!/^[6-9]/.test(phone)){msg.textContent='Enter a valid 10-digit Indian mobile number.';return;}
  const items=cartProducts();if(!items.length){msg.textContent='Your cart is empty.';return;}
  button.disabled=true;button.textContent='Placing order…';msg.textContent='';
- const method=String(values.get('payment_method')||'cod');if(method==='upi'&&!storePayment.upi_id){msg.textContent='UPI is not configured yet. Please select Cash on Delivery or contact the showroom.';return;}
+ const method=String(values.get('payment_method')||'cod');if(method==='upi'&&!storePayment.upi_id){button.disabled=false;button.textContent='Place order';msg.textContent='UPI is not configured yet. Please select Cash on Delivery or contact the showroom.';return;}
  const notes=[String(values.get('notes')||'').trim(),method==='upi'&&String(values.get('upi_reference')||'').trim()?'UPI reference: '+String(values.get('upi_reference')).trim():''].filter(Boolean).join(' | ')||null;
  const customer={full_name:String(values.get('full_name')).trim(),phone,email:String(values.get('email')||'').trim()||null,address_line:String(values.get('address_line')).trim(),city:String(values.get('city')).trim(),state:String(values.get('state')).trim(),pincode:String(values.get('pincode')).trim(),notes};
  const {data,error}=await supabase.rpc('place_order',{p_customer:customer,p_items:items.map(x=>({product_id:x.id,quantity:x.quantity,selected_size:x.selected_size||null,custom_dimensions:x.custom_dimensions||null})),p_payment_method:method,p_coupon:null});
- button.disabled=false;button.textContent='Place COD order';
+ button.disabled=false;button.textContent='Place order';
  if(error){msg.textContent=error.message||'We could not place your order. Please check your details and try again.';return;}
  cart=[];saveCart();form.hidden=true;
  const success=document.getElementById('order-success');success.hidden=false;success.replaceChildren(el('div',{class:'order-success'},[
