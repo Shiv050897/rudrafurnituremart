@@ -146,7 +146,7 @@ function renderProducts(){
   const detail=el('button',{type:'button',class:'btn btn--outline',text:'View details',onclick:()=>openProductDetail(product)});
   const action=product.price!=null&&product.price_type==='fixed'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Get a quote',onclick:()=>productEnquiry(product)});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
-   el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+product.room}),el('h3',{text:product.name}),
+   el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.price_tier==='premium'?'Premium collection':'General collection')+' · '+product.room}),el('h3',{text:product.name}),
    el('span',{class:'product__detail',text:product.detail}),el('span',{class:'product__meta',text:product.material}),
    el('div',{class:'product__foot'},[price]),el('div',{class:'product__actions'},[detail,action])
   ])]);
@@ -161,7 +161,7 @@ function initCatalogueControls(){
 }
 async function loadStoreProducts(){
  try{
-  const {data,error}=await supabase.from('products').select('id,name,slug,short_description,description,material,dimensions,colors,customization,delivery_estimate,price,price_type,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
+  const {data,error}=await supabase.from('products').select('id,name,slug,short_description,description,material,dimensions,colors,customization,delivery_estimate,price,price_type,price_tier,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
   if(error)throw error;
   if(!data?.length){PRODUCTS.splice(0,PRODUCTS.length);renderProducts();return;}
   const categoryRoom = name => {const n=(name||'').toLowerCase();if(/kid|child/.test(n))return 'Kids';if(/sofa|chair|living/.test(n))return 'Living';if(/bed|wardrobe/.test(n))return 'Bedroom';if(/dining|table/.test(n))return 'Dining';if(/office/.test(n))return 'Office';if(/door/.test(n))return 'Doors';if(/outdoor|garden|patio|balcony/.test(n))return 'Living';return 'All';};
