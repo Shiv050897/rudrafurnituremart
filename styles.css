@@ -298,3 +298,61 @@ a:hover{color:var(--green-dark)}
 .order-success__mark{background:#DCEBE4;color:var(--green-dark)}
 .photo-fallback{background:linear-gradient(145deg,#E7EAE4,#D8E1DC)!important;color:#405D58!important}
 .photo-fallback__mark{background:var(--green-dark)}
+
+
+/* Gold-forward luxury palette: antique gold, champagne, espresso and ivory */
+:root{
+ --ground:#F7F2E8;
+ --surface:#FFFCF5;
+ --ink:#2B211B;
+ --ink-2:#554438;
+ --muted:#796B5D;
+ --line:#E5D7C1;
+ --green:#A87932;
+ --green-dark:#65451F;
+ --green-mid:#8D642D;
+ --teak:#A87932;
+ --sand:#E4C98F;
+}
+body{background:var(--ground);color:var(--ink)}
+a{color:#9A6A27}
+a:hover{color:#65451F}
+.header{background:rgba(247,242,232,.97);border-bottom-color:var(--line)}
+.brand,.brand:hover{color:var(--ink)}
+.brand__mark{background:linear-gradient(145deg,#E3C47D,#946323);border:1px solid #F0DDAF;color:#2B211B}
+.strip,.footer{background:#2B211B}
+.strip{color:#F7F2E8}
+.strip a,.footer a,.footer__brand p{color:#E9DCC5}
+.footer__bottom{border-color:rgba(228,201,143,.28);color:#C8B99F}
+.btn--green,.floating-cart{background:linear-gradient(135deg,#C49A4A,#966522);color:#241A12;border-color:#D9B96F}
+.btn--green:hover,.floating-cart:hover{background:linear-gradient(135deg,#A87932,#704B22);color:#fff}
+.btn--outline{border-color:#A87932;color:#65451F}
+.btn--outline:hover{background:#65451F;border-color:#65451F;color:#fff}
+.btn--light{background:#EFE3CB;color:#65451F}
+.eyebrow,.product__price,.detail-price{color:#986724}
+.promise{background:#EFE6D6;border-color:var(--line)}
+.product,.room,.contact{border-color:var(--line)}
+.product{background:var(--surface)}
+.product__badge{background:#2B211B;color:#F7F2E8}
+.product__price--quote{color:#986724}
+.tab{border-color:#A87932;color:#65451F}
+.tab[aria-pressed="true"]{background:#A87932;border-color:#A87932;color:#fff}
+.hero__card{background:linear-gradient(145deg,#B98A3C,#704B22);color:#fffaf0}
+.custom{background:#2B211B;color:#F7F2E8}
+.steps li{background:#493522}
+.steps__num{color:#E4C98F}
+.form input:focus,.form select:focus,.form textarea:focus{outline-color:rgba(168,121,50,.25);border-color:#A87932}
+.map-link{background:linear-gradient(135deg,#F0E4CC,#E3D1AD);color:#65451F}
+.map-link:hover{background:#E8D5B0;color:#65451F}
+.launch-banner__slides{background:#2B211B}
+.launch-slide__shade{background:linear-gradient(90deg,rgba(34,24,17,.82) 0%,rgba(34,24,17,.56) 39%,rgba(34,24,17,.08) 78%),linear-gradient(0deg,rgba(0,0,0,.18),transparent 45%)}
+.launch-banner__arrows button{color:#65451F}
+.launch-banner__arrows button:hover,.launch-banner__dots button.is-active{background:#A87932}
+.floating-cart{border:1px solid rgba(228,201,143,.75);box-shadow:0 10px 30px rgba(74,49,20,.25)}
+.floating-cart b{color:#65451F}
+.commerce-overlay{background:rgba(34,24,17,.68)}
+.commerce-close{background:#EFE3CB;color:var(--ink)}
+.checkout-total{background:#F0E4CC;color:#65451F}
+.order-success__mark{background:#F1E3C6;color:#80571F}
+.photo-fallback{background:linear-gradient(145deg,#F0E6D5,#E1D2B9)!important;color:#71552F!important}
+.photo-fallback__mark{background:linear-gradient(145deg,#C49A4A,#80571F);color:#fff}
