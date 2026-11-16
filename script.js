@@ -158,13 +158,14 @@ function initForm(){
  });
  document.getElementById('send-another').addEventListener('click',()=>{thanks.hidden=true;form.hidden=false;});
 }
+const CART_KEY='rudra_furniture_cart_v1';
+let cart=[];
+let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart'};
+
 document.getElementById('year').textContent=new Date().getFullYear();
 renderRooms();renderTabs();initCatalogueControls();initLaunchBanner();renderProducts();initForm();initCommerce();loadStoreProducts();
 
 
-const CART_KEY='rudra_furniture_cart_v1';
-let cart=[];
-let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart'};
 const inr=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(value)||0);
 function readCart(){try{cart=JSON.parse(localStorage.getItem(CART_KEY)||'[]').filter(x=>x&&x.id&&Number.isInteger(x.quantity)&&x.quantity>0);}catch{cart=[];}saveCart();}
 function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(cart));const count=cart.reduce((n,x)=>n+x.quantity,0);const badge=document.getElementById('cart-count');if(badge)badge.textContent=count;const floatingCount=document.getElementById('floating-cart-count');if(floatingCount)floatingCount.textContent=count;}
