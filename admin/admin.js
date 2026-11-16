@@ -46,7 +46,7 @@ $('#reset-form').addEventListener('click',resetForm);
 async function loadDashboard(){
  const [catResult,prodResult]=await Promise.all([
   supabase.from('categories').select('id,name').eq('is_active',true).order('sort_order'),
-  supabase.from('products').select('id,category_id,name,slug,short_description,description,material,dimensions,colors,price_type,price,is_featured,is_bestseller,is_active,product_images(id,url,alt,sort_order),categories(name)').order('created_at',{ascending:false})
+  supabase.from('products').select('id,category_id,name,slug,short_description,description,material,dimensions,colors,price_type,price,space_type,is_featured,is_bestseller,is_active,product_images(id,url,alt,sort_order),categories(name)').order('created_at',{ascending:false})
  ]);
  if(catResult.error){message('#form-message','Could not load categories: '+catResult.error.message);return;}
  if(prodResult.error){$('#product-list').textContent='Could not load products: '+prodResult.error.message;return;}
@@ -69,7 +69,7 @@ function renderProducts(){
   if(img){const image=document.createElement('img');image.src=img;image.alt=p.name;row.append(image);}
   else{const placeholder=document.createElement('div');placeholder.className='product-placeholder';row.append(placeholder);}
   const info=document.createElement('div');const title=document.createElement('h3');title.textContent=p.name;
-  const detail=document.createElement('p');detail.textContent=(p.categories?.name||'Uncategorised')+' · '+money(p.price,p.price_type)+' · '+(p.is_active?'Visible':'Hidden');
+  const detail=document.createElement('p');detail.textContent=(p.categories?.name||'Uncategorised')+' · '+(p.space_type||'indoor')+' · '+money(p.price,p.price_type)+' · '+(p.is_active?'Visible':'Hidden')+' · '+(p.product_images?.length||0)+' photo(s)';
   info.append(title,detail);row.append(info);
   const actions=document.createElement('div');actions.className='product-actions';
   const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';edit.addEventListener('click',()=>editProduct(p));
@@ -82,7 +82,7 @@ function resetForm(){
 }
 function editProduct(p){
  const form=$('#product-form');
- for(const key of ['id','name','category_id','short_description','description','material','dimensions','colors','customization','delivery_estimate','price_type','price'])form.elements[key].value=p[key]??'';
+ for(const key of ['id','name','category_id','short_description','description','material','dimensions','colors','customization','delivery_estimate','price_type','price','space_type'])form.elements[key].value=p[key]??'';
  for(const key of ['is_featured','is_bestseller','is_active'])form.elements[key].checked=!!p[key];
  form.elements.photo.value='';$('#editor-title').textContent='Edit product';$('#save-product').textContent='Update product';message('#form-message','Editing '+p.name,true);
  form.scrollIntoView({behavior:'smooth',block:'start'});
@@ -91,20 +91,23 @@ $('#product-form').addEventListener('submit',async event=>{
  event.preventDefault();const button=$('#save-product');button.disabled=true;button.textContent='Saving…';message('#form-message','');
  try{
   const form=new FormData(event.currentTarget),id=form.get('id'),name=String(form.get('name')).trim(),priceType=form.get('price_type'),rawPrice=form.get('price');
-  const payload={name,slug:slugify(name),category_id:form.get('category_id'),short_description:form.get('short_description')||null,description:form.get('description')||null,material:form.get('material')||null,dimensions:form.get('dimensions')||null,colors:String(form.get('colors')||'').split(',').map(x=>x.trim()).filter(Boolean),customization:form.get('customization')||null,delivery_estimate:form.get('delivery_estimate')||null,price_type:priceType,price:rawPrice===''?null:Number(rawPrice),is_featured:form.has('is_featured'),is_bestseller:form.has('is_bestseller'),is_active:form.has('is_active')};
+  const payload={name,slug:slugify(name),category_id:form.get('category_id'),space_type:form.get('space_type')||'indoor',short_description:form.get('short_description')||null,description:form.get('description')||null,material:form.get('material')||null,dimensions:form.get('dimensions')||null,colors:String(form.get('colors')||'').split(',').map(x=>x.trim()).filter(Boolean),customization:form.get('customization')||null,delivery_estimate:form.get('delivery_estimate')||null,price_type:priceType,price:rawPrice===''?null:Number(rawPrice),is_featured:form.has('is_featured'),is_bestseller:form.has('is_bestseller'),is_active:form.has('is_active')};
   if(priceType==='quote')payload.price=null;
   if(id){const {error}=await supabase.from('products').update(payload).eq('id',id);if(error)throw error;}
   else{const {data,error}=await supabase.from('products').insert(payload).select('id').single();if(error)throw error;payload.id=data.id;}
-  const productId=id||payload.id,photo=form.get('photo');
-  if(photo&&photo.size){
-   if(photo.size>5*1024*1024)throw new Error('Photo must be 5 MB or smaller.');
-   if(!['image/jpeg','image/png','image/webp'].includes(photo.type))throw new Error('Use a JPG, PNG or WebP photo.');
+  const productId=id||payload.id,photos=Array.from(form.getAll('photo')).filter(file=>file&&file.size);
+  if(photos.length>5)throw new Error('Please upload no more than 5 photos at a time.');
+  for(let index=0;index<photos.length;index++){
+   const photo=photos[index];
+   if(photo.size>5*1024*1024)throw new Error(photo.name+' is larger than 5 MB.');
+   if(!['image/jpeg','image/png','image/webp'].includes(photo.type))throw new Error('Use JPG, PNG or WebP photos only.');
    const safeName=slugify(photo.name.replace(/\.[^.]+$/,''))||'product-photo';
-   const path=productId+'/'+Date.now()+'-'+safeName+'.'+photo.type.split('/')[1].replace('jpeg','jpg');
+   const ext=photo.type.split('/')[1].replace('jpeg','jpg');
+   const path=productId+'/'+Date.now()+'-'+index+'-'+safeName+'.'+ext;
    const {error:uploadError}=await supabase.storage.from('product-images').upload(path,photo,{contentType:photo.type,upsert:false});
    if(uploadError)throw uploadError;
    const {data:publicUrl}=supabase.storage.from('product-images').getPublicUrl(path);
-   const {error:imageError}=await supabase.from('product_images').insert({product_id:productId,url:publicUrl.publicUrl,alt:name,sort_order:0});
+   const {error:imageError}=await supabase.from('product_images').insert({product_id:productId,url:publicUrl.publicUrl,alt:name,sort_order:index});
    if(imageError)throw imageError;
   }
   message('#form-message',id?'Product updated successfully.':'Product added successfully.',true);resetForm();await loadDashboard();
