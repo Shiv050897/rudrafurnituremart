@@ -190,6 +190,21 @@ let cart=[];
 let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:''};
 
 
+
+// Hide the full mobile header while browsing down; reveal it on upward scroll.
+let lastScrollY=window.scrollY||0,scrollFrame=false;
+function updateMobileHeaderScroll(){
+ const header=document.querySelector('.header');if(!header)return;
+ const mobile=window.matchMedia('(max-width: 640px)').matches;
+ if(!mobile){header.classList.remove('header--scroll-hidden');return;}
+ const y=window.scrollY||0,delta=y-lastScrollY;
+ if(y<70||delta<-7)header.classList.remove('header--scroll-hidden');
+ else if(delta>7)header.classList.add('header--scroll-hidden');
+ lastScrollY=y;scrollFrame=false;
+}
+window.addEventListener('scroll',()=>{if(!scrollFrame){scrollFrame=true;requestAnimationFrame(updateMobileHeaderScroll);}},{passive:true});
+window.addEventListener('resize',updateMobileHeaderScroll);
+
 // Accessible collapsible navigation for mobile screens
 const mobileMenuToggle=document.getElementById('mobile-menu-toggle');
 const primaryNavigation=document.getElementById('primary-navigation');
