@@ -135,6 +135,15 @@ function visibleProducts(){
  if(sortMode==='price-high')list.sort((a,b)=>(b.price??-Infinity)-(a.price??-Infinity));
  return list;
 }
+async function sharePublicProduct(product){
+ const url='https://rudrafurnituremart.com/?product='+encodeURIComponent(product.slug||product.id);
+ const payload={title:product.name,text:'View '+product.name+' at Rudra Furniture Mart',url};
+ try{
+  if(navigator.share){await navigator.share(payload);return;}
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);alert('Product link copied. Share it with anyone.');return;}
+  window.prompt('Copy this product link:',url);
+ }catch(error){if(error.name!=='AbortError')window.prompt('Copy this product link:',url);}
+}
 function renderProducts(){
  const root=document.getElementById('product-grid'),list=visibleProducts(),count=document.getElementById('product-count');
  if(count)count.textContent=list.length+' '+(list.length===1?'item':'items');
@@ -145,10 +154,11 @@ function renderProducts(){
   const price=el('span',{class:product.price==null||product.price_type==='quote'?'product__price product__price--quote':'product__price',text:displayProductPrice(product)});
   const detail=el('button',{type:'button',class:'btn btn--outline',text:'View details',onclick:()=>openProductDetail(product)});
   const action=product.price!=null&&product.price_type==='fixed'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Enquiry',onclick:()=>productEnquiry(product)});
+  const share=el('button',{type:'button',class:'btn btn--outline product__share',text:'Share',ariaLabel:'Share '+product.name,onclick:()=>sharePublicProduct(product)});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
    el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.price_tier==='premium'?'Premium collection':'General collection')+' · '+product.room}),el('h3',{text:product.name}),
    el('span',{class:'product__detail',text:product.detail}),el('span',{class:'product__meta',text:product.material}),
-   el('div',{class:'product__foot'},[price]),el('div',{class:'product__actions'},[detail,action])
+   el('div',{class:'product__foot'},[price]),el('div',{class:'product__actions'},[detail,action,share])
   ])]);
  }));
 }
