@@ -168,6 +168,8 @@ async function loadStoreProducts(){
   const live=data.map(p=>({id:p.id,name:p.name,slug:p.slug,room:categoryRoom(p.categories?.name),category:p.categories?.name||'Furniture',space_type:p.space_type||'indoor',detail:p.short_description||p.description||'Contact us for product details',description:p.description||p.short_description||'Contact our showroom for complete product details.',material:p.material||'Please enquire',dimensions:p.dimensions||'Made to suit your space',colors:Array.isArray(p.colors)?p.colors:[],customization:p.customization||'Please enquire about customisation.',delivery_estimate:p.delivery_estimate||'To be confirmed by showroom',price_type:p.price_type,price:p.price_type==='quote'?null:p.price,size_options:Array.isArray(p.size_options)?p.size_options:[],image:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))[0]?.url||DEMO_PRODUCT_IMAGES[p.slug]||null,images:p.product_images?.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))||[],badge:p.is_bestseller?'Bestseller':p.is_featured?'Featured':''}));
   PRODUCTS.splice(0,PRODUCTS.length,...live);
   renderProducts();
+  const sharedSlug=new URLSearchParams(window.location.search).get('product');
+  if(sharedSlug){const sharedProduct=PRODUCTS.find(item=>item.slug===sharedSlug||item.id===sharedSlug);if(sharedProduct){openProductDetail(sharedProduct);document.getElementById('products')?.scrollIntoView({behavior:'smooth',block:'start'});}}
  }catch(error){console.warn('Could not load live catalogue; showing starter catalogue.',error);}
 }
 function initForm(){
