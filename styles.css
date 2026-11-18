@@ -662,3 +662,6 @@ body{background:linear-gradient(180deg,#F7F0E5 0%,#F1E3CE 48%,#FBF7F0 100%)!impo
 .visit-call-cta{display:inline-flex;align-items:center;justify-content:center;margin:4px 0 8px;padding:11px 19px;border-radius:999px;background:linear-gradient(120deg,#D8B36D,#B68137);color:#2B1A10!important;font-weight:850;font-size:17px;text-decoration:none;box-shadow:0 4px 12px rgba(49,30,15,.16)}
 .visit-call-cta:active{transform:scale(.98)}
 @media(max-width:640px){.strip-phone{font-size:14px}.header-actions .header-call{font-size:16px!important;font-weight:850!important}.visit-phone-number{font-size:27px}.visit-call-cta{font-size:18px;min-height:48px;width:100%;max-width:280px}}
+
+/* Product photo opens its details when tapped */
+.product__photo-clickable{cursor:pointer}.product__photo-clickable:focus-visible{outline:3px solid #b9893d;outline-offset:3px}.detail-gallery__share{display:inline-flex;align-items:center;justify-content:center;margin:10px 0;padding:10px 18px;border:1px solid #b9893d;border-radius:999px;background:#fffaf1;color:#3a281c;font-weight:700;cursor:pointer}
