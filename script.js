@@ -151,9 +151,10 @@ function renderProducts(){
  root.replaceChildren(...list.map(product=>{
   const image=photo(product.image,product.name,'product__photo');
   if(product.badge)image.append(el('span',{class:'product__badge',text:product.badge}));
+  image.classList.add('product__photo-clickable');image.setAttribute('role','button');image.setAttribute('tabindex','0');image.setAttribute('aria-label','View '+product.name+' photos');image.addEventListener('click',()=>openProductDetail(product));image.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openProductDetail(product);}});
   const price=el('span',{class:product.price==null||product.price_type==='quote'?'product__price product__price--quote':'product__price',text:displayProductPrice(product)});
   const detail=el('button',{type:'button',class:'btn btn--outline',text:'View details',onclick:()=>openProductDetail(product)});
-  const action=product.price!=null&&product.price_type==='fixed'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Enquiry',onclick:()=>productEnquiry(product)});
+  const action=product.sales_mode==='cart'&&product.price!=null&&product.price_type==='fixed'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Enquiry',onclick:()=>productEnquiry(product)});
   const share=el('button',{type:'button',class:'btn btn--outline product__share',text:'Share',ariaLabel:'Share '+product.name,onclick:()=>sharePublicProduct(product)});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
    el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.price_tier==='premium'?'Premium collection':'General collection')+' · '+product.room}),el('h3',{text:product.name}),
@@ -171,7 +172,7 @@ function initCatalogueControls(){
 }
 async function loadStoreProducts(){
  try{
-  const {data,error}=await supabase.from('products').select('id,name,slug,short_description,description,material,dimensions,colors,customization,delivery_estimate,price,price_type,price_tier,size_options,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
+  const {data,error}=await supabase.from('products').select('id,name,slug,short_description,description,material,dimensions,colors,customization,delivery_estimate,price,price_type,price_tier,sales_mode,size_options,space_type,is_featured,is_bestseller,categories(name),product_images(url,alt,sort_order)').eq('is_active',true).order('is_featured',{ascending:false}).order('created_at',{ascending:false});
   if(error)throw error;
   if(!data?.length){PRODUCTS.splice(0,PRODUCTS.length);renderProducts();return;}
   const categoryRoom = name => {const n=(name||'').toLowerCase();if(/kid|child/.test(n))return 'Kids';if(/sofa|chair|living/.test(n))return 'Living';if(/bed|wardrobe/.test(n))return 'Bedroom';if(/dining|table/.test(n))return 'Dining';if(/office/.test(n))return 'Office';if(/door/.test(n))return 'Doors';if(/outdoor|garden|patio|balcony/.test(n))return 'Living';return 'All';};
@@ -335,14 +336,15 @@ function openProductDetail(product){
  if(photos.length){
   const viewer=el('div',{class:'detail-gallery__viewer'});
   const main=el('img',{src:photos[0],alt:product.name+' main photograph'});
+  const imageShare=el('button',{type:'button',class:'detail-gallery__share',text:'Share this product',onclick:()=>sharePublicProduct(product)});
   const zoom=el('button',{type:'button',class:'detail-gallery__zoom',text:'⛶ View larger',onclick:()=>{const win=window.open('','_blank');if(win){win.document.write('<title>'+product.name+'</title><img src="'+photos[active]+'" style="max-width:100%;height:auto;display:block;margin:auto">');win.document.close();}}});
-  viewer.append(main,zoom);
+  viewer.append(main,zoom,imageShare);
   const thumbs=el('div',{class:'detail-gallery__thumbs'});
   let active=0;
   photos.forEach((url,i)=>{const thumb=el('button',{type:'button',class:'detail-gallery__thumb'+(i===0?' is-active':''),ariaLabel:'View product photo '+(i+1),onclick:()=>{active=i;main.src=url;main.alt=product.name+' photo '+(i+1);thumbs.querySelectorAll('button').forEach((b,k)=>b.classList.toggle('is-active',k===i));}});thumb.append(el('img',{src:url,alt:product.name+' thumbnail '+(i+1),loading:'lazy'}));thumbs.append(thumb);});
   gallery.append(viewer,thumbs);
  }else gallery.append(el('div',{class:'detail-no-photo',text:'Product photographs will be added soon'}));
- const buyable=product.price!=null&&product.price_type==='fixed';
+ const buyable=product.sales_mode==='cart'&&product.price!=null&&product.price_type==='fixed';
  const sizeWrap=el('div',{class:'product-size-picker'}),sizeLabel=el('label',{text:'Choose size'}),sizeSelect=el('select',{class:'product-size-select'});sizeSelect.append(new Option('Select a size',''));(product.size_options||[]).forEach(size=>sizeSelect.append(new Option(size,size)));if(!(product.size_options||[]).length)sizeSelect.append(new Option('Standard size','Standard size'));sizeLabel.append(sizeSelect);const customLabel=el('label',{text:'Need a custom size? Enter dimensions'}),customInput=el('input',{type:'text',maxlength:120,placeholder:'e.g. 6 ft × 6.5 ft, or your required dimensions'});customLabel.append(customInput);sizeWrap.append(sizeLabel,customLabel);
  root.append(gallery,el('div',{class:'detail-copy'},[
   el('span',{class:'eyebrow',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.category||product.room)}),
