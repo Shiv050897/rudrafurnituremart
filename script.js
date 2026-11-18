@@ -338,13 +338,22 @@ function openProductDetail(product){
   const main=el('img',{src:photos[0],alt:product.name+' main photograph'});
   const imageShare=el('button',{type:'button',class:'detail-gallery__share',text:'Share this product',onclick:()=>sharePublicProduct(product)});
   const openPhotoZoom=()=>{
-   const overlay=el('div',{class:'product-photo-lightbox',role:'dialog','aria-modal':'true','aria-label':'Enlarged product photo'});
-   const close=el('button',{type:'button',class:'product-photo-lightbox__close',text:'×',ariaLabel:'Close enlarged photo'});
-   const enlarged=el('img',{src:photos[active],alt:product.name+' enlarged photo'});
+   let zoomIndex=active,touchStartX=0,touchStartY=0;
+   const overlay=el('div',{class:'product-photo-lightbox',role:'dialog','aria-modal':'true','aria-label':'Product photo gallery. Swipe to view all photos'});
+   const close=el('button',{type:'button',class:'product-photo-lightbox__close',text:'×',ariaLabel:'Close enlarged photos'});
+   const enlarged=el('img',{src:photos[zoomIndex],alt:product.name+' enlarged photo 1'});
+   const counter=el('span',{class:'product-photo-lightbox__counter',text:(zoomIndex+1)+' / '+photos.length});
+   const previous=el('button',{type:'button',class:'product-photo-lightbox__nav product-photo-lightbox__prev',text:'‹',ariaLabel:'Previous photo'});
+   const next=el('button',{type:'button',class:'product-photo-lightbox__nav product-photo-lightbox__next',text:'›',ariaLabel:'Next photo'});
+   const updateZoom=index=>{zoomIndex=(index+photos.length)%photos.length;enlarged.src=photos[zoomIndex];enlarged.alt=product.name+' enlarged photo '+(zoomIndex+1);counter.textContent=(zoomIndex+1)+' / '+photos.length;active=zoomIndex;main.src=photos[active];main.alt=product.name+' photo '+(active+1);thumbs.querySelectorAll('button').forEach((b,k)=>b.classList.toggle('is-active',k===active));};
    const closeZoom=()=>{overlay.remove();document.removeEventListener('keydown',onKey);};
-   const onKey=event=>{if(event.key==='Escape')closeZoom();};
+   const onKey=event=>{if(event.key==='Escape')closeZoom();else if(event.key==='ArrowLeft')updateZoom(zoomIndex-1);else if(event.key==='ArrowRight')updateZoom(zoomIndex+1);};
+   previous.addEventListener('click',()=>updateZoom(zoomIndex-1));next.addEventListener('click',()=>updateZoom(zoomIndex+1));
+   enlarged.addEventListener('touchstart',event=>{touchStartX=event.changedTouches[0].clientX;touchStartY=event.changedTouches[0].clientY;},{passive:true});
+   enlarged.addEventListener('touchend',event=>{const dx=event.changedTouches[0].clientX-touchStartX,dy=event.changedTouches[0].clientY-touchStartY;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))updateZoom(zoomIndex+(dx<0?1:-1));},{passive:true});
    close.addEventListener('click',closeZoom);overlay.addEventListener('click',event=>{if(event.target===overlay)closeZoom();});
-   overlay.append(close,enlarged);document.body.append(overlay);document.addEventListener('keydown',onKey);
+   overlay.append(close,previous,enlarged,next,counter);document.body.append(overlay);document.addEventListener('keydown',onKey);
+   if(photos.length<2){previous.hidden=true;next.hidden=true;counter.hidden=true;}
   };
   main.addEventListener('click',openPhotoZoom);
   const zoom=el('button',{type:'button',class:'detail-gallery__zoom',text:'⛶ View larger',onclick:openPhotoZoom});
