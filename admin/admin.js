@@ -179,8 +179,9 @@ function renderProducts(){
   info.append(title,detail);row.append(info);
   const actions=document.createElement('div');actions.className='product-actions';
   const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';edit.addEventListener('click',()=>editProduct(p));
+  const share=document.createElement('button');share.type='button';share.textContent='Share';share.title='Share this product link';share.addEventListener('click',async()=>{const url='https://rudrafurnituremart.com/?product='+encodeURIComponent(p.slug||p.id);const payload={title:p.name,text:'View '+p.name+' at Rudra Furniture Mart',url};try{if(navigator.share){await navigator.share(payload);}else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);alert('Product link copied. You can now share it with anyone.');}else{window.prompt('Copy this product link:',url);}}catch(error){if(error.name!=='AbortError')window.prompt('Copy this product link:',url);}});
   const del=document.createElement('button');del.type='button';del.textContent='Delete';del.addEventListener('click',()=>deleteProduct(p));
-  actions.append(edit,del);row.append(actions);root.append(row);
+  actions.append(edit,share,del);row.append(actions);root.append(row);
  });
 }
 function resetForm(){
