@@ -337,7 +337,17 @@ function openProductDetail(product){
   const viewer=el('div',{class:'detail-gallery__viewer'});
   const main=el('img',{src:photos[0],alt:product.name+' main photograph'});
   const imageShare=el('button',{type:'button',class:'detail-gallery__share',text:'Share this product',onclick:()=>sharePublicProduct(product)});
-  const zoom=el('button',{type:'button',class:'detail-gallery__zoom',text:'⛶ View larger',onclick:()=>{const win=window.open('','_blank');if(win){win.document.write('<title>'+product.name+'</title><img src="'+photos[active]+'" style="max-width:100%;height:auto;display:block;margin:auto">');win.document.close();}}});
+  const openPhotoZoom=()=>{
+   const overlay=el('div',{class:'product-photo-lightbox',role:'dialog','aria-modal':'true','aria-label':'Enlarged product photo'});
+   const close=el('button',{type:'button',class:'product-photo-lightbox__close',text:'×',ariaLabel:'Close enlarged photo'});
+   const enlarged=el('img',{src:photos[active],alt:product.name+' enlarged photo'});
+   const closeZoom=()=>{overlay.remove();document.removeEventListener('keydown',onKey);};
+   const onKey=event=>{if(event.key==='Escape')closeZoom();};
+   close.addEventListener('click',closeZoom);overlay.addEventListener('click',event=>{if(event.target===overlay)closeZoom();});
+   overlay.append(close,enlarged);document.body.append(overlay);document.addEventListener('keydown',onKey);
+  };
+  main.addEventListener('click',openPhotoZoom);
+  const zoom=el('button',{type:'button',class:'detail-gallery__zoom',text:'⛶ View larger',onclick:openPhotoZoom});
   viewer.append(main,zoom,imageShare);
   const thumbs=el('div',{class:'detail-gallery__thumbs'});
   let active=0;
