@@ -47,7 +47,7 @@
         <a href="#visit">Visit us</a>
         <a href="/order-bill.html">Download paid order bill</a>
       </nav>
-      <div class="header-actions"><a class="header-call" href="tel:+919451713626" aria-label="Call Rudra Furniture Mart">📞 अभी कॉल करें</a><button type="button" class="btn btn--outline cart-open" id="open-cart">Cart <span id="cart-count">0</span></button><a href="#contact" class="btn btn--green">📝 Enquiry</a></div>
+      <div class="header-actions"><a class="header-call" href="tel:+919451713626" aria-label="Call Rudra Furniture Mart">📞 अभी कॉल करें</a><button type="button" class="btn btn--outline cart-open" id="open-cart" hidden>Cart <span id="cart-count">0</span></button><a href="#contact" class="btn btn--green">📝 Enquiry</a></div>
     </div>
   </header>
 
@@ -119,12 +119,11 @@
       </div>
       <div class="catalogue-tools">
         <label class="catalogue-search"><span class="sr-only">Search furniture</span><input id="product-search" type="search" placeholder="Search beds, sofas, dining tables…" autocomplete="off"></label>
-        <label class="catalogue-sort"><span>Sort by</span><select id="product-sort"><option value="featured">Featured</option><option value="name">Name: A to Z</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select></label>
+        <label class="catalogue-sort"><span>Sort by</span><select id="product-sort"><option value="featured">Featured</option><option value="name">Name: A to Z</option></select></label>
         <span class="catalogue-count" id="product-count" aria-live="polite"></span>
       </div>
       <div class="products" id="product-grid"></div>
-      <p class="catalogue-note">Add-to-cart and Cash on Delivery are available for products with confirmed fixed prices. Custom-made and quotation-only products can be enquired about directly.</p>
-      <p class="catalogue-note">Prices are shown only where confirmed. For made-to-measure furniture and products without a listed price, request a personalised quote.</p>
+      <p class="catalogue-note">To know the price of any product, call us on <a href="tel:+919451713626">+91 94517 13626</a> or send an enquiry — we'll share the latest price and availability.</p>
     </section>
 
 
@@ -205,7 +204,7 @@
     </section>
   </main>
 
-  <button type="button" class="floating-cart" id="floating-cart" aria-label="Open shopping cart">🛒 <span>Cart</span> <b id="floating-cart-count">0</b></button>
+  <button type="button" class="floating-cart" id="floating-cart" hidden aria-label="Open shopping cart">🛒 <span>Cart</span> <b id="floating-cart-count">0</b></button>
 
   <div class="commerce-overlay" id="product-modal" hidden><div class="commerce-panel product-detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title"><button class="commerce-close" type="button" data-close="product-modal" aria-label="Close">×</button><div id="product-detail-content"></div></div></div>
   <div class="commerce-overlay" id="cart-modal" hidden><div class="commerce-panel cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-title"><button class="commerce-close" type="button" data-close="cart-modal" aria-label="Close">×</button><div class="eyebrow">YOUR SELECTION</div><h2 id="cart-title">Shopping cart</h2><div id="cart-items"></div><div id="cart-summary"></div><button class="btn btn--green btn--lg" id="checkout-start" type="button">Proceed to checkout</button><p class="muted cart-hint">Cash on Delivery is available for eligible fixed-price items.</p></div></div>

@@ -10,11 +10,11 @@ A one-page static website for Rudra Furniture Mart: plain HTML, CSS and JavaScri
 
 ## Filling in the details
 
-Search the files for `[` to find every placeholder, for example `[CITY]`, `[PHONE NUMBER]`, `[PRICE]`, `[EMAIL ADDRESS]`, `[GST NUMBER]`.
+Search the files for `[` to find every placeholder, for example `[CITY]`, `[PHONE NUMBER]`, `[EMAIL ADDRESS]`, `[GST NUMBER]`.
 
 - Phone and WhatsApp links use `+910000000000`. Replace with the real number (digits only, with country code).
 - To add product photos, put them in an `images/` folder and set `image: "images/your-photo.jpg"` on the product in `script.js`.
-- Set `price` to a number (e.g. `price: 28000`) to show it as ₹ 28,000.
+- Prices are not shown on the website. Every product has **Call for price** and **Enquiry** buttons instead.
 
 ## Preview locally
 

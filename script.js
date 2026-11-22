@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.119.0';
 const supabase = createClient('https://txueuktoagvcidwdxjxe.supabase.co','sb_publishable_cgK84vg1sY7R1TOxGfsYjw_02uy6ulI');
 // Rudra Furniture Mart — Phase 1 product catalogue
 // Replace temporary photo URLs with your own uploaded files when ready.
-// Set price to a number only after the shop confirms it; null means request a quote.
+// Prices are not shown on the website; every product offers Call for price and Enquiry.
 
 const ROOMS = [
  {key:'Living',name:'Living room',items:'Sofas, centre tables, TV units',image:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&auto=format&fit=crop&q=80'},
@@ -113,7 +113,10 @@ function formatPrice(price){
  if(price==null)return 'Request a quote';
  return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(price);
 }
-function displayProductPrice(product){if(product.price==null||product.price_type==='quote')return 'Request a quote';const amount=formatPrice(product.price);return product.price_type==='starting'?'Starting from '+amount:amount;}
+// Prices are never shown on the website: customers call or send an enquiry to ask.
+const SHOP_PHONE='+919451713626';
+function displayProductPrice(){return 'Call or enquire for price';}
+function callButton(extraClass){return el('a',{class:'btn btn--outline product__call'+(extraClass?' '+extraClass:''),href:'tel:'+SHOP_PHONE,text:'📞 Call for price','aria-label':'Call Rudra Furniture Mart to ask the price'});}
 function productEnquiry(product){
  const select=document.querySelector('#quote-form select[name="interest"]');
  const details=document.querySelector('#quote-form textarea[name="details"]');
@@ -131,8 +134,6 @@ function visibleProducts(){
   return roomMatch&&spaceMatch&&text.includes(searchTerm);
  });
  if(sortMode==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
- if(sortMode==='price-low')list.sort((a,b)=>(a.price??Infinity)-(b.price??Infinity));
- if(sortMode==='price-high')list.sort((a,b)=>(b.price??-Infinity)-(a.price??-Infinity));
  return list;
 }
 async function sharePublicProduct(product){
@@ -152,14 +153,15 @@ function renderProducts(){
   const image=photo(product.image,product.name,'product__photo');
   if(product.badge)image.append(el('span',{class:'product__badge',text:product.badge}));
   image.classList.add('product__photo-clickable');image.setAttribute('role','button');image.setAttribute('tabindex','0');image.setAttribute('aria-label','View '+product.name+' photos');image.addEventListener('click',()=>openProductDetail(product));image.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openProductDetail(product);}});
-  const price=el('span',{class:product.price==null||product.price_type==='quote'?'product__price product__price--quote':'product__price',text:displayProductPrice(product)});
+  const price=el('span',{class:'product__price product__price--quote',text:displayProductPrice(product)});
   const detail=el('button',{type:'button',class:'btn btn--outline',text:'View details',onclick:()=>openProductDetail(product)});
-  const action=product.sales_mode==='cart'&&product.price!=null&&product.price_type==='fixed'?el('button',{type:'button',class:'btn btn--green',text:'Add to cart',onclick:()=>addToCart(product)}):el('button',{type:'button',class:'btn btn--green',text:'Enquiry',onclick:()=>productEnquiry(product)});
+  const action=el('button',{type:'button',class:'btn btn--green',text:'Enquiry',onclick:()=>productEnquiry(product)});
+  const call=callButton();
   const share=el('button',{type:'button',class:'btn btn--outline product__share',text:'Share',ariaLabel:'Share '+product.name,onclick:()=>sharePublicProduct(product)});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
    el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.price_tier==='premium'?'Premium collection':'General collection')+' · '+product.room}),el('h3',{text:product.name}),
    el('span',{class:'product__detail',text:product.detail}),el('span',{class:'product__meta',text:product.material}),
-   el('div',{class:'product__foot'},[price]),el('div',{class:'product__actions'},[detail,action,share])
+   el('div',{class:'product__foot'},[price]),el('div',{class:'product__actions'},[call,action,detail,share])
   ])]);
  }));
 }
@@ -363,7 +365,6 @@ function openProductDetail(product){
   photos.forEach((url,i)=>{const thumb=el('button',{type:'button',class:'detail-gallery__thumb'+(i===0?' is-active':''),ariaLabel:'View product photo '+(i+1),onclick:()=>{active=i;main.src=url;main.alt=product.name+' photo '+(i+1);thumbs.querySelectorAll('button').forEach((b,k)=>b.classList.toggle('is-active',k===i));}});thumb.append(el('img',{src:url,alt:product.name+' thumbnail '+(i+1),loading:'lazy'}));thumbs.append(thumb);});
   gallery.append(viewer,thumbs);
  }else gallery.append(el('div',{class:'detail-no-photo',text:'Product photographs will be added soon'}));
- const buyable=product.sales_mode==='cart'&&product.price!=null&&product.price_type==='fixed';
  const sizeWrap=el('div',{class:'product-size-picker'}),sizeLabel=el('label',{text:'Choose size'}),sizeSelect=el('select',{class:'product-size-select'});sizeSelect.append(new Option('Select a size',''));(product.size_options||[]).forEach(size=>sizeSelect.append(new Option(size,size)));if(!(product.size_options||[]).length)sizeSelect.append(new Option('Standard size','Standard size'));sizeLabel.append(sizeSelect);const customLabel=el('label',{text:'Need a custom size? Enter dimensions'}),customInput=el('input',{type:'text',maxlength:120,placeholder:'e.g. 6 ft × 6.5 ft, or your required dimensions'});customLabel.append(customInput);sizeWrap.append(sizeLabel,customLabel);
  root.append(gallery,el('div',{class:'detail-copy'},[
   el('span',{class:'eyebrow',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.category||product.room)}),
@@ -376,7 +377,7 @@ function openProductDetail(product){
    el('dt',{text:'Customisation'}),el('dd',{text:product.customization||'Please enquire'}),
    el('dt',{text:'Delivery estimate'}),el('dd',{text:product.delivery_estimate||'To be confirmed'})
   ]),
-  buyable?el('button',{class:'btn btn--green btn--lg',type:'button',text:'Add to cart',onclick:()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;if(!chosen&&!custom){alert('Please choose a size or enter your custom dimensions.');return;}closeLayer('product-modal');addToCart(product,chosen,custom);}}):el('button',{class:'btn btn--green btn--lg',type:'button',text:'Request a quote',onclick:()=>{closeLayer('product-modal');productEnquiry(product);}})
+  el('div',{class:'detail-actions'},[callButton('btn--lg'),el('button',{class:'btn btn--green btn--lg',type:'button',text:'Send enquiry',onclick:()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;closeLayer('product-modal');productEnquiry(product);const details=document.querySelector('#quote-form textarea[name="details"]');if(details&&(chosen||custom))details.value+=(chosen?'\nSize: '+chosen:'')+(custom?'\nCustom dimensions: '+custom:'');}})])
  ]));openLayer('product-modal');
 }
 

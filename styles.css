@@ -689,3 +689,8 @@ body{background:linear-gradient(180deg,#F7F0E5 0%,#F1E3CE 48%,#FBF7F0 100%)!impo
 .product-photo-lightbox__prev{grid-column:1}.product-photo-lightbox__next{grid-column:3;align-self:center;justify-self:center;margin-top:65px}
 .product-photo-lightbox__counter{grid-column:1/4;grid-row:2;justify-self:center;color:#fff8ed;font-size:14px;font-weight:700;letter-spacing:.08em}
 @media(max-width:640px){.product-photo-lightbox{grid-template-columns:38px minmax(0,1fr) 38px;gap:4px;padding:8px}.product-photo-lightbox__nav{width:36px;height:46px;font-size:30px}.product-photo-lightbox__next{margin-top:58px}.product-photo-lightbox>img{max-height:calc(100vh - 80px)}}
+
+/* Price on request: call + enquiry */
+.detail-actions{display:flex;flex-wrap:wrap;gap:10px}.detail-actions .btn{flex:1 1 200px;justify-content:center}
+.product__call{text-decoration:none}
+#open-cart[hidden],.floating-cart[hidden]{display:none !important}
