@@ -219,8 +219,10 @@ function initForm(){
 }
 const CART_KEY='rudra_furniture_cart_v1';
 let cart=[];
-// upi_is_merchant: set to true in site_settings only for a BUSINESS UPI ID (PhonePe/Paytm/GPay Business).
-// UPI apps decline website pay links to personal UPI IDs, so the direct 'open app' button stays hidden otherwise.
+// upi_is_merchant: keep 'false' unless the UPI ID belongs to a full merchant account that is allowed to
+// receive website/intent payments (e.g. via a payment gateway). Personal UPI IDs AND PhonePe Business
+// small-merchant QRs (mc=0000, like Q937022434@ybl) are scan/UPI-ID only: apps reject pay links to them
+// ('as per UPI guidelines payment through link is not allowed'). Only then is the one-tap button shown.
 // upi_mc: merchant category code from the business QR (e.g. 0000 for PhonePe Business); added to pay links.
 let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:'',upi_is_merchant:'',upi_mc:''};
 
