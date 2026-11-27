@@ -257,7 +257,74 @@ if(mobileMenuToggle&&primaryNavigation){
 }
 
 document.getElementById('year').textContent=new Date().getFullYear();
+
+// ---- Quick pay (जल्दी भुगतान): name + mobile + product → UPI ----
+// Each request is saved as an enquiry (furniture_type "Quick payment — …") so the
+// shop sees it in the admin panel, then the customer pays with any UPI app.
+let quickPay=null;
+function qpStep(n){[1,2,3].forEach(i=>document.getElementById('qp-step-'+i)?.classList.toggle('is-active',i<=n));}
+function openQuickPay(productName){
+ const form=document.getElementById('quick-pay-form');if(!form)return;
+ document.getElementById('quick-pay-step2').hidden=true;document.getElementById('quick-pay-off').hidden=true;form.hidden=false;qpStep(1);
+ if(productName)form.querySelector('input[name="product"]').value=productName;
+ openLayer('quick-pay-modal');
+ setTimeout(()=>form.querySelector(productName?'input[name="name"]':'input[name="name"]')?.focus(),50);
+}
+function qpUpiUri(){
+ if(!storePayment.upi_id||!quickPay)return '';
+ const amount=quickPay.amount?'&am='+encodeURIComponent(quickPay.amount.toFixed(2)):'';
+ return 'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name||'Rudra Furniture Mart')+amount+'&cu=INR&tn='+encodeURIComponent(('RFM '+quickPay.product).slice(0,50));
+}
+function qpRefreshConfirm(){
+ if(!quickPay)return;
+ const ref=document.getElementById('qp-ref').value.trim();
+ const text='नमस्ते Rudra Furniture Mart 🙏\nमैंने UPI से भुगतान कर दिया है।\nनाम: '+quickPay.name+'\nमोबाइल: '+quickPay.phone+'\nसामान: '+quickPay.product+(quickPay.amount?'\nरक़म: ₹'+quickPay.amount.toLocaleString('en-IN'):'')+(ref?'\nUPI ट्रांज़ैक्शन नंबर: '+ref:'')+'\nकृपया भुगतान पक्का करें।';
+ document.getElementById('qp-confirm').href=waLink(text);
+}
+function initQuickPay(){
+ const form=document.getElementById('quick-pay-form');if(!form)return;
+ document.querySelectorAll('[data-quick-pay]').forEach(a=>a.addEventListener('click',event=>{event.preventDefault();
+  openQuickPay();}));
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const v=new FormData(form),submit=form.querySelector('button[type="submit"]');
+  const name=String(v.get('name')||'').trim(),product=String(v.get('product')||'').trim();
+  let phone=String(v.get('phone')||'').replace(/\D/g,'');if(phone.length===12&&phone.startsWith('91'))phone=phone.slice(2);
+  const amount=Number(v.get('amount'))||0;
+  if(!name){alert('कृपया अपना नाम लिखें।');return;}
+  if(!/^[6-9][0-9]{9}$/.test(phone)){alert('कृपया सही 10 अंकों का मोबाइल नंबर लिखें।\nPlease enter a valid 10-digit mobile number.');form.querySelector('input[name="phone"]').focus();return;}
+  if(!product){alert('कृपया सामान का नाम लिखें।');return;}
+  if(!storePayment.upi_id){form.hidden=true;document.getElementById('quick-pay-off').hidden=false;return;}
+  const html=submit.innerHTML;submit.disabled=true;submit.textContent='एक पल रुकें… (Please wait)';
+  quickPay={name,phone,product,amount:amount>0?Math.round(amount):0};
+  const {error}=await supabase.from('custom_inquiries').insert({name,phone,furniture_type:('Quick payment — '+product).slice(0,120),budget:quickPay.amount?('₹'+quickPay.amount.toLocaleString('en-IN')).slice(0,80):null,requirements:'जल्दी भुगतान (Quick pay) शुरू किया। UPI से भुगतान की जाँच करें।\nProduct: '+product+(quickPay.amount?'\nAmount: ₹'+quickPay.amount:'\nAmount: customer will enter in UPI app'),status:'new'});
+  submit.disabled=false;submit.innerHTML=html;
+  if(error)console.error('Quick pay record failed',error); // still let the customer pay
+  const uri=qpUpiUri();
+  document.getElementById('qp-summary').replaceChildren(
+   el('div',{},[el('span',{text:'नाम'}),el('b',{text:name})]),
+   el('div',{},[el('span',{text:'मोबाइल'}),el('b',{text:phone})]),
+   el('div',{},[el('span',{text:'सामान'}),el('b',{text:product})]),
+   el('div',{},[el('span',{text:'रक़म'}),el('b',{text:quickPay.amount?'₹'+quickPay.amount.toLocaleString('en-IN'):'UPI ऐप में भरें'})])
+  );
+  document.getElementById('qp-upi-link').href=uri;
+  document.getElementById('qp-upi-id').textContent=storePayment.upi_id;
+  document.getElementById('qp-payee').textContent=storePayment.upi_name||'Rudra Furniture Mart';
+  document.getElementById('qp-qr').src=quickPay.amount||!storePayment.upi_qr_url?'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data='+encodeURIComponent(uri):storePayment.upi_qr_url;
+  document.getElementById('qp-ref').value='';qpRefreshConfirm();
+  form.hidden=true;document.getElementById('quick-pay-step2').hidden=false;qpStep(2);
+  document.querySelector('.quick-pay-panel').scrollTop=0;
+ });
+ document.getElementById('qp-ref').addEventListener('input',qpRefreshConfirm);
+ document.getElementById('qp-confirm').addEventListener('click',()=>{qpRefreshConfirm();qpStep(3);});
+ document.getElementById('qp-back').addEventListener('click',()=>{document.getElementById('quick-pay-step2').hidden=true;form.hidden=false;qpStep(1);});
+ document.getElementById('qp-copy').addEventListener('click',async()=>{const b=document.getElementById('qp-copy');try{await navigator.clipboard.writeText(storePayment.upi_id);b.textContent='कॉपी हो गया ✓';}catch{window.prompt('UPI ID कॉपी करें:',storePayment.upi_id);}});
+ if(location.hash==='#pay'){const name=new URLSearchParams(location.search).get('pay_for');openQuickPay(name||'');}
+ window.addEventListener('hashchange',()=>{if(location.hash==='#pay')openQuickPay();});
+}
+
 initWhatsAppLinks();
+initQuickPay();
 loadHomepageReviews();
 renderRooms();renderTabs();initCatalogueControls();initLaunchBanner();renderProducts();initForm();initCommerce();loadStoreProducts();
 
@@ -395,7 +462,7 @@ function openProductDetail(product){
    el('dt',{text:'अपनी पसंद से बदलाव'}),el('dd',{text:product.customization||'फ़ोन पर पूछें'}),
    el('dt',{text:'डिलीवरी का समय'}),el('dd',{text:product.delivery_estimate||'फ़ोन पर बताया जाएगा'})
   ]),
-  el('div',{class:'detail-actions'},[callButton('btn--lg'),(()=>{const wa=waButton(product,'btn--lg');wa.addEventListener('click',()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;wa.href=waLink(productWaText(product)+(chosen?'\nसाइज़: '+chosen:'')+(custom?'\nमेरा नाप: '+custom:''));});return wa;})(),el('button',{class:'btn btn--outline btn--lg',type:'button',text:'📝 फ़ॉर्म भरें — हम कॉल करेंगे',onclick:()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;closeLayer('product-modal');productEnquiry(product);const details=document.querySelector('#quote-form textarea[name="details"]');if(details&&(chosen||custom))details.value+=(chosen?'\nसाइज़ (Size): '+chosen:'')+(custom?'\nनाप (Custom): '+custom:'');}})])
+  el('div',{class:'detail-actions'},[callButton('btn--lg'),(()=>{const wa=waButton(product,'btn--lg');wa.addEventListener('click',()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;wa.href=waLink(productWaText(product)+(chosen?'\nसाइज़: '+chosen:'')+(custom?'\nमेरा नाप: '+custom:''));});return wa;})(),el('button',{class:'btn btn--outline btn--lg',type:'button',text:'💳 दाम तय हो गया? भुगतान करें',onclick:()=>{closeLayer('product-modal');openQuickPay(product.name);}}),el('button',{class:'btn btn--outline btn--lg',type:'button',text:'📝 फ़ॉर्म भरें — हम कॉल करेंगे',onclick:()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;closeLayer('product-modal');productEnquiry(product);const details=document.querySelector('#quote-form textarea[name="details"]');if(details&&(chosen||custom))details.value+=(chosen?'\nसाइज़ (Size): '+chosen:'')+(custom?'\nनाप (Custom): '+custom:'');}})])
  ]));openLayer('product-modal');
 }
 

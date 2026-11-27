@@ -443,3 +443,38 @@ small[lang="en"], .en { color: var(--muted); font-weight: 500; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Quick pay (जल्दी भुगतान) */
+.nav a.nav-pay { color: var(--gold-light); }
+.quick-pay-panel { width: min(100%, 560px); }
+.qp-steps { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 0 18px; padding: 0; }
+.qp-steps li { padding: 8px 6px; border-radius: 10px; background: #EFE5D3; color: var(--muted); font-size: 14px; font-weight: 700; text-align: center; line-height: 1.25; }
+.qp-steps li.is-active { background: var(--walnut); color: var(--gold-light); }
+.quick-pay-panel .form button[type="submit"] { width: 100%; }
+.qp-pay { display: flex; flex-direction: column; gap: 14px; }
+.qp-pay[hidden] { display: none; }
+.qp-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; padding: 14px 16px; border-radius: 14px; background: #FFF6E7; border: 1px solid var(--line); }
+.qp-summary div { display: flex; flex-direction: column; min-width: 0; }
+.qp-summary span { font-size: 13px; color: var(--muted); font-weight: 600; }
+.qp-summary b { font-size: 17px; color: var(--walnut-dark); overflow-wrap: anywhere; }
+.qp-pay .btn--xl { width: 100%; }
+.qp-or { margin: 0; text-align: center; color: var(--muted); font-size: 15px; }
+.qp-qr { display: flex; justify-content: center; }
+.qp-qr img { width: 220px; height: 220px; object-fit: contain; padding: 8px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.qp-upi-id { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; text-align: center; }
+.qp-upi-id b { overflow-wrap: anywhere; }
+.qp-upi-id .btn { min-height: 42px; padding: 6px 16px; font-size: 15px; }
+.qp-warn { margin: 0; padding: 10px 14px; border-radius: 12px; background: #FEF3C7; color: #78350F; font-size: 15px; }
+.qp-done { display: flex; flex-direction: column; gap: 12px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.qp-done label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: 16px; }
+.qp-done input { padding: 12px 14px; min-height: 50px; border: 2px solid #D9C6A6; border-radius: 12px; background: #fff; font-size: 18px; }
+.qp-done .muted { font-size: 15px; }
+.qp-off { padding: 16px; border-radius: 12px; background: #FFF6E7; border: 1px solid var(--line); }
+.detail-actions .btn--outline + .btn--outline { grid-column: 1 / -1; }
+@media (max-width: 680px) {
+  .action-bar { grid-template-columns: repeat(4, 1fr); }
+  .action-bar a { font-size: 14px; }
+  .action-bar__pay { background: #8A5F24; }
+  .qp-qr img { width: 190px; height: 190px; }
+}
+#quick-pay-form[hidden], #quick-pay-off[hidden] { display: none !important; }

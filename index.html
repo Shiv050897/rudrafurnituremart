@@ -27,7 +27,7 @@
   <div class="strip">
     <div class="container strip__inner">
       <span>🙏 1999 से आपकी सेवा में · मनचाहे साइज़ में फ़र्नीचर बनवाएँ <span class="en" lang="en">Serving you since 1999</span></span>
-      <span class="strip__links"><a class="strip-bill" href="/order-bill.html">🧾 बिल डाउनलोड</a><a class="strip-phone" href="tel:+919451713626">📞 94517 13626 पर कॉल करें</a></span>
+      <span class="strip__links"><a class="strip-bill" href="#pay" data-quick-pay>💳 जल्दी भुगतान</a><a class="strip-bill" href="/order-bill.html">🧾 बिल डाउनलोड</a><a class="strip-phone" href="tel:+919451713626">📞 94517 13626 पर कॉल करें</a></span>
     </div>
   </div>
 
@@ -48,6 +48,7 @@
         <a href="#custom">ऑर्डर पर बनवाएँ <small lang="en">Custom</small></a>
         <a href="#how">ऑर्डर कैसे करें <small lang="en">How to order</small></a>
         <a href="#visit">दुकान का पता <small lang="en">Visit us</small></a>
+        <a href="#pay" class="nav-pay" data-quick-pay>💳 भुगतान करें <small lang="en">Quick pay</small></a>
       </nav>
       <div class="header-actions">
         <a class="btn btn--call" href="tel:+919451713626">📞 कॉल करें</a>
@@ -74,7 +75,7 @@
           <li>✓ 1999 से भरोसा</li>
           <li>✓ मनचाहा साइज़ व डिज़ाइन</li>
           <li>✓ दुकान पर आकर देखें-परखें</li>
-          <li>✓ वेबसाइट पर कोई भुगतान नहीं</li>
+          <li>✓ दाम पहले फ़ोन पर तय</li>
         </ul>
       </div>
 
@@ -270,8 +271,9 @@
       </div>
       <div class="faq-grid">
         <details><summary>दाम कैसे पता करें?</summary><p>हर सामान के नीचे <b>📞 दाम पूछें</b> या <b>💬 WhatsApp</b> बटन दबाएँ। आप 94517 13626 पर सीधे कॉल भी कर सकते हैं।</p></details>
-        <details><summary>क्या वेबसाइट पर पैसे देने होंगे?</summary><p>नहीं। वेबसाइट से सिर्फ़ पूछताछ होती है। ऑर्डर और भुगतान की बात हम फ़ोन पर या दुकान पर करते हैं।</p></details>
+        <details><summary>क्या पहले पैसे देने होंगे?</summary><p>नहीं। पहले फ़ोन पर दाम और ऑर्डर तय करें। दाम तय होने के बाद आप चाहें तो वेबसाइट से UPI द्वारा भुगतान कर सकते हैं, या दुकान पर दे सकते हैं।</p></details>
         <details><summary>क्या मनचाहे साइज़ में फ़र्नीचर बनवा सकते हैं?</summary><p>हाँ। कमरे का नाप और डिज़ाइन की फ़ोटो WhatsApp करें या दुकान पर लेकर आएँ।</p></details>
+        <details><summary>ऑनलाइन भुगतान कैसे करें?</summary><p>मेनू में <b>💳 भुगतान करें</b> दबाएँ, नाम, मोबाइल नंबर और सामान का नाम भरें, फिर UPI ऐप (PhonePe, Google Pay, Paytm) से पैसे भेजें। दुकान भुगतान जाँचकर आपको पक्का करेगी।</p></details>
         <details><summary>दुकान कहाँ है?</summary><p>विश्वकर्मा नगर, शाहपुर बदलापुर, जौनपुर (उ.प्र.) – 222125। ऊपर “रास्ता देखें” बटन दबाकर Google Maps पर रास्ता देखें।</p></details>
         <details><summary>कौन-कौन सा फ़र्नीचर मिलता है?</summary><p>पलंग, सोफ़ा, अलमारी, डाइनिंग टेबल, कुर्सी, ऑफिस फ़र्नीचर, लकड़ी के दरवाज़े और ऑर्डर पर बना फ़र्नीचर।</p></details>
         <details><summary>क्या घर तक डिलीवरी होती है?</summary><p>आपके इलाक़े में डिलीवरी और फ़िटिंग के बारे में फ़ोन पर पूछें — हम पूरी जानकारी देंगे।</p></details>
@@ -292,9 +294,42 @@
   <nav class="action-bar" aria-label="तुरंत संपर्क">
     <a href="tel:+919451713626" class="action-bar__call"><span aria-hidden="true">📞</span>कॉल करें</a>
     <a href="https://wa.me/919451713626" target="_blank" rel="noopener" class="action-bar__wa" data-wa><span aria-hidden="true">💬</span>WhatsApp</a>
+    <a href="#pay" class="action-bar__pay" data-quick-pay><span aria-hidden="true">💳</span>भुगतान</a>
     <a href="#contact" class="action-bar__form"><span aria-hidden="true">📝</span>पूछताछ</a>
   </nav>
   <a href="https://wa.me/919451713626" target="_blank" rel="noopener" class="floating-wa" data-wa aria-label="WhatsApp पर बात करें">💬 <span>WhatsApp पर पूछें</span></a>
+
+  <!-- Quick pay -->
+  <div class="commerce-overlay" id="quick-pay-modal" hidden><div class="commerce-panel quick-pay-panel" role="dialog" aria-modal="true" aria-labelledby="quick-pay-title"><button class="commerce-close" type="button" data-close="quick-pay-modal" aria-label="बंद करें">×</button>
+    <span class="eyebrow">💳 जल्दी भुगतान · <span lang="en">Quick pay</span></span>
+    <h2 id="quick-pay-title">UPI से तुरंत भुगतान करें</h2>
+    <ol class="qp-steps" aria-label="भुगतान के क़दम"><li class="is-active" id="qp-step-1">1. जानकारी भरें</li><li id="qp-step-2">2. UPI से पैसे भेजें</li><li id="qp-step-3">3. हमें बताएँ</li></ol>
+
+    <form id="quick-pay-form" class="form">
+      <label>आपका नाम <small lang="en">Your name</small><input name="name" required maxlength="120" autocomplete="name" placeholder="जैसे: रमेश यादव"></label>
+      <label>मोबाइल नंबर <small lang="en">Mobile number</small><input name="phone" type="tel" required inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="10 अंकों का नंबर"></label>
+      <label>किस सामान का भुगतान? <small lang="en">Product name</small><input name="product" required maxlength="90" placeholder="जैसे: शीशम का पलंग"></label>
+      <label>रक़म (₹) <small lang="en">Amount — जो दुकान ने बताई</small><input name="amount" type="number" inputmode="decimal" min="1" max="1000000" step="1" placeholder="जैसे: 5000 (पता न हो तो खाली छोड़ें)"></label>
+      <button type="submit" class="btn btn--call btn--lg">आगे बढ़ें — भुगतान करें → <small lang="en">Continue to pay</small></button>
+      <p class="form__privacy">🔒 आपकी जानकारी सिर्फ़ भुगतान जाँचने के लिए दुकान को जाती है।</p>
+    </form>
+
+    <div id="quick-pay-step2" class="qp-pay" hidden>
+      <div class="qp-summary" id="qp-summary"></div>
+      <a id="qp-upi-link" class="btn btn--wa btn--xl" href="#" rel="nofollow"><span>📱 UPI ऐप से भुगतान करें</span><small>PhonePe · Google Pay · Paytm · BHIM</small></a>
+      <p class="qp-or">या नीचे दिया QR कोड किसी भी UPI ऐप से स्कैन करें</p>
+      <div class="qp-qr"><img id="qp-qr" alt="Rudra Furniture Mart का UPI QR कोड"></div>
+      <div class="qp-upi-id"><span>UPI ID: <b id="qp-upi-id">—</b></span><button type="button" class="btn btn--outline" id="qp-copy">कॉपी करें</button></div>
+      <p class="qp-warn">⚠️ पैसे भेजने से पहले UPI ऐप में नाम <b id="qp-payee">Rudra Furniture Mart</b> ज़रूर जाँचें।</p>
+      <div class="qp-done">
+        <label>भुगतान के बाद UPI ट्रांज़ैक्शन नंबर (ज़रूरी नहीं) <small lang="en">UPI reference / UTR</small><input id="qp-ref" maxlength="40" inputmode="numeric" placeholder="12 अंकों का नंबर"></label>
+        <a id="qp-confirm" class="btn btn--call btn--lg" href="#" target="_blank" rel="noopener">✅ मैंने भुगतान कर दिया — WhatsApp पर बताएँ</a>
+        <p class="muted">दुकान आपके भुगतान की जाँच करके फ़ोन या WhatsApp पर पक्का करेगी। भुगतान का स्क्रीनशॉट भी WhatsApp पर भेज सकते हैं।</p>
+        <button type="button" class="btn btn--outline" id="qp-back">← जानकारी बदलें</button>
+      </div>
+    </div>
+    <div id="quick-pay-off" class="qp-off" hidden><p>अभी ऑनलाइन भुगतान चालू नहीं है। कृपया <a href="tel:+919451713626">94517 13626</a> पर कॉल करें।</p></div>
+  </div></div>
 
   <button type="button" class="floating-cart" id="floating-cart" hidden aria-label="Open shopping cart">🛒 <span>Cart</span> <b id="floating-cart-count">0</b></button>
 
@@ -316,6 +351,7 @@
         <a href="#custom">ऑर्डर पर बनवाएँ</a>
         <a href="#how">ऑर्डर कैसे करें</a>
         <a href="#visit">दुकान का पता</a>
+        <a href="#pay" data-quick-pay>💳 भुगतान करें</a>
         <a href="/order-bill.html">बिल डाउनलोड</a>
         <a href="/feedback.html">अपनी राय दें</a>
       </nav>
