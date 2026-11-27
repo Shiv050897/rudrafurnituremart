@@ -273,7 +273,7 @@ function openQuickPay(productName){
 function qpUpiUri(){
  if(!storePayment.upi_id||!quickPay)return '';
  const amount=quickPay.amount?'&am='+encodeURIComponent(quickPay.amount.toFixed(2)):'';
- return 'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name||'Rudra Furniture Mart')+amount+'&cu=INR&tn='+encodeURIComponent(('RFM '+quickPay.product).slice(0,50));
+ return 'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name||'Rudra Furniture Mart')+amount+'&cu=INR&tn='+encodeURIComponent('Rudra Furniture Mart payment');
 }
 function qpRefreshConfirm(){
  if(!quickPay)return;
@@ -310,7 +310,10 @@ function initQuickPay(){
   document.getElementById('qp-upi-link').href=uri;
   document.getElementById('qp-upi-id').textContent=storePayment.upi_id;
   document.getElementById('qp-payee').textContent=storePayment.upi_name||'Rudra Furniture Mart';
-  document.getElementById('qp-qr').src=quickPay.amount||!storePayment.upi_qr_url?'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data='+encodeURIComponent(uri):storePayment.upi_qr_url;
+  // Prefer the shop's own QR (made by its bank/UPI app, so it is always correct); amount is typed in the app.
+  const qrSrc=storePayment.upi_qr_url||('https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data='+encodeURIComponent('upi://pay?pa='+storePayment.upi_id+'&pn='+(storePayment.upi_name||'Rudra Furniture Mart')+'&cu=INR'));
+  document.getElementById('qp-qr').src=qrSrc;document.getElementById('qp-qr-save').href=qrSrc;
+  document.getElementById('qp-copy').textContent='कॉपी करें';
   document.getElementById('qp-ref').value='';qpRefreshConfirm();
   form.hidden=true;document.getElementById('quick-pay-step2').hidden=false;qpStep(2);
   document.querySelector('.quick-pay-panel').scrollTop=0;
