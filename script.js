@@ -219,7 +219,9 @@ function initForm(){
 }
 const CART_KEY='rudra_furniture_cart_v1';
 let cart=[];
-let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:''};
+// upi_is_merchant: set to true in site_settings only for a BUSINESS UPI ID (PhonePe/Paytm/GPay Business).
+// UPI apps decline website pay links to personal UPI IDs, so the direct 'open app' button stays hidden otherwise.
+let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:'',upi_is_merchant:''};
 
 
 
@@ -314,6 +316,8 @@ function initQuickPay(){
   const qrSrc=storePayment.upi_qr_url||('https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data='+encodeURIComponent('upi://pay?pa='+storePayment.upi_id+'&pn='+(storePayment.upi_name||'Rudra Furniture Mart')+'&cu=INR'));
   document.getElementById('qp-qr').src=qrSrc;document.getElementById('qp-qr-save').href=qrSrc;
   document.getElementById('qp-copy').textContent='कॉपी करें';
+  document.getElementById('qp-way-app').hidden=String(storePayment.upi_is_merchant).toLowerCase()!=='true';
+  const note=document.getElementById('qp-amount-note');note.hidden=!quickPay.amount;if(quickPay.amount)note.textContent='UPI ऐप में रक़म ₹'+quickPay.amount.toLocaleString('en-IN')+' भरें।';
   document.getElementById('qp-ref').value='';qpRefreshConfirm();
   form.hidden=true;document.getElementById('quick-pay-step2').hidden=false;qpStep(2);
   document.querySelector('.quick-pay-panel').scrollTop=0;
@@ -339,7 +343,7 @@ function openLayer(id){document.getElementById(id).hidden=false;document.body.cl
 function closeLayer(id){document.getElementById(id).hidden=true;if(!document.querySelector('.commerce-overlay:not([hidden])'))document.body.classList.remove('modal-open');}
 function initCommerce(){
  readCart();
- supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name','upi_qr_url']).then(({data})=>{(data||[]).forEach(x=>storePayment[x.key]=String(x.value||'').replace(/^\"|\"$/g,''));refreshUpiDisplay();});
+ supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name','upi_qr_url','upi_is_merchant']).then(({data})=>{(data||[]).forEach(x=>storePayment[x.key]=String(x.value||'').replace(/^\"|\"$/g,''));refreshUpiDisplay();});
  document.querySelectorAll('input[name="payment_method"]').forEach(r=>r.addEventListener('change',refreshUpiDisplay));
  document.getElementById('copy-upi')?.addEventListener('click',async()=>{if(!storePayment.upi_id)return;try{await navigator.clipboard.writeText(storePayment.upi_id);document.getElementById('copy-upi').textContent='Copied';}catch{document.getElementById('upi-id-display').textContent=storePayment.upi_id;}});
  const showCart=()=>{renderCart();openLayer('cart-modal');};document.getElementById('open-cart').addEventListener('click',showCart);document.getElementById('floating-cart')?.addEventListener('click',showCart);
@@ -364,7 +368,7 @@ function refreshUpiDisplay(){
    const caption=document.getElementById('upi-qr-caption');if(caption)caption.textContent=storePayment.upi_qr_url?'Scan Rudra Furniture Mart’s saved UPI QR. Confirm the payable amount in your UPI app.':'Scan this QR to pay '+inr(total)+' to '+storePayment.upi_name+'.';
   }
  }
- const link=document.getElementById('upi-app-link');link.href=upiUri||'#';link.hidden=!storePayment.upi_id;
+ const link=document.getElementById('upi-app-link');link.href=upiUri||'#';link.hidden=!storePayment.upi_id||String(storePayment.upi_is_merchant).toLowerCase()!=='true';
 }
 function addToCart(product,selectedSize='',customDimensions=''){
  if(!product.id||product.price==null||product.price_type!=='fixed'){productEnquiry(product);return;}
