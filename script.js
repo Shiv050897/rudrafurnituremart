@@ -2,15 +2,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.119.0';
 const supabase = createClient('https://txueuktoagvcidwdxjxe.supabase.co','sb_publishable_cgK84vg1sY7R1TOxGfsYjw_02uy6ulI');
 // Rudra Furniture Mart — Phase 1 product catalogue
 // Replace temporary photo URLs with your own uploaded files when ready.
-// Prices are not shown on the website; every product offers Call for price and Enquiry.
+// Prices are not shown on the website; every product offers Call (दाम पूछें) and WhatsApp.
+// Labels are Hindi-first for customers who don't read English.
 
 const ROOMS = [
- {key:'Living',name:'Living room',items:'Sofas, centre tables, TV units',image:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&auto=format&fit=crop&q=80'},
- {key:'Bedroom',name:'Bedroom',items:'Beds, wardrobes, dressers',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop&q=80'},
- {key:'Dining',name:'Dining',items:'4, 6 and 8-seater sets',image:'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=900&auto=format&fit=crop&q=80'},
- {key:'Office',name:'Office',items:'Desks, chairs, storage',image:'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&auto=format&fit=crop&q=80'},
- {key:'Kids',name:'Kids room',items:'Single beds, study tables, almirahs',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop&q=80'},
- {key:'Doors',name:'Doors & woodwork',items:'Main doors, room doors, custom work',image:'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=900&auto=format&fit=crop&q=80'}
+ {key:'Living',name:'Living room',hi:'बैठक / ड्राइंग रूम',hiItems:'सोफ़ा, सेंटर टेबल, टीवी यूनिट',items:'Sofas, centre tables, TV units',image:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&auto=format&fit=crop&q=80'},
+ {key:'Bedroom',name:'Bedroom',hi:'बेडरूम',hiItems:'पलंग, अलमारी, ड्रेसिंग टेबल',items:'Beds, wardrobes, dressers',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop&q=80'},
+ {key:'Dining',name:'Dining',hi:'डाइनिंग',hiItems:'4, 6 और 8 कुर्सी वाले सेट',items:'4, 6 and 8-seater sets',image:'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=900&auto=format&fit=crop&q=80'},
+ {key:'Office',name:'Office',hi:'ऑफिस',hiItems:'मेज़, कुर्सी, रैक',items:'Desks, chairs, storage',image:'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&auto=format&fit=crop&q=80'},
+ {key:'Kids',name:'Kids room',hi:'बच्चों का कमरा',hiItems:'सिंगल बेड, पढ़ाई की टेबल, अलमारी',items:'Single beds, study tables, almirahs',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop&q=80'},
+ {key:'Doors',name:'Doors & woodwork',hi:'दरवाज़े व लकड़ी का काम',hiItems:'मेन गेट, कमरों के दरवाज़े, नक्काशी',items:'Main doors, room doors, custom work',image:'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=900&auto=format&fit=crop&q=80'}
 ];
 
 // Temporary professional photos are used initially. Replace image URLs with
@@ -61,6 +62,20 @@ const DEMO_PRODUCT_IMAGES = {
 const TABS=['All',...ROOMS.map(room=>room.key)];
 let activeRoom='All',activeSpace='all',searchTerm='',sortMode='featured';
 
+// ---- Hindi labels ----
+const SHOP_PHONE='+919451713626',SHOP_WA='919451713626';
+const ROOM_HI={All:'सभी',Living:'बैठक',Bedroom:'बेडरूम',Dining:'डाइनिंग',Office:'ऑफिस',Kids:'बच्चों का',Doors:'दरवाज़े'};
+const ROOM_EN={All:'All',Living:'Living',Bedroom:'Bedroom',Dining:'Dining',Office:'Office',Kids:'Kids',Doors:'Doors'};
+// Hindi name for a product type, picked from words in its English name.
+const TYPE_HI=[[/bunk/,'बंक बेड (दो मंज़िला पलंग)'],[/sofa|couch/,'सोफ़ा'],[/mattress/,'गद्दा'],[/bed|cot|palang/,'पलंग / बेड'],[/wardrobe|almirah|almari/,'अलमारी'],[/dining/,'डाइनिंग सेट'],[/dressing|dresser/,'ड्रेसिंग टेबल'],[/study/,'पढ़ाई की टेबल'],[/desk/,'ऑफिस मेज़'],[/centre table|center table|coffee table/,'सेंटर टेबल'],[/tv/,'टीवी यूनिट'],[/table/,'मेज़ / टेबल'],[/chair/,'कुर्सी'],[/door/,'लकड़ी का दरवाज़ा'],[/swing|jhula/,'झूला'],[/bench/,'बेंच'],[/book|shelf|rack/,'रैक / शेल्फ़'],[/cabinet|storage/,'कैबिनेट'],[/patio|bistro|garden|outdoor/,'बगीचे का फ़र्नीचर']];
+function hindiType(product){const n=(product.name+' '+(product.category||'')).toLowerCase();for(const [re,hi] of TYPE_HI)if(re.test(n))return hi;return 'फ़र्नीचर';}
+const BADGE_HI={Bestseller:'सबसे ज़्यादा बिका',Featured:'ख़ास पसंद',Customisable:'मनचाहा साइज़',Popular:'लोकप्रिय','Made to order':'ऑर्डर पर बनता है','Family favourite':'परिवार की पसंद','Custom work':'कस्टम काम'};
+function waLink(text){return 'https://wa.me/'+SHOP_WA+'?text='+encodeURIComponent(text);}
+function productUrl(product){return 'https://rudrafurnituremart.com/?product='+encodeURIComponent(product.slug||product.id||product.name);}
+function productWaText(product){return 'नमस्ते Rudra Furniture Mart 🙏\nमुझे इस सामान का दाम और जानकारी चाहिए:\n'+hindiType(product)+' — '+product.name+(product.slug||product.id?'\n'+productUrl(product):'');}
+const DEFAULT_WA_TEXT='नमस्ते Rudra Furniture Mart 🙏 मुझे फ़र्नीचर के बारे में जानकारी चाहिए।';
+function initWhatsAppLinks(){document.querySelectorAll('[data-wa]').forEach(a=>{a.href=waLink(a.dataset.waText||DEFAULT_WA_TEXT);});}
+
 function el(tag,attrs={},children=[]){
  const node=document.createElement(tag);
  for(const [key,value] of Object.entries(attrs)){
@@ -99,29 +114,29 @@ function arrow(){
 }
 function renderRooms(){
  const root=document.getElementById('rooms');
- root.replaceChildren(...ROOMS.map(room=>el('button',{type:'button',class:'room',onclick:()=>{
+ root.replaceChildren(...ROOMS.map(room=>el('button',{type:'button',class:'room','aria-label':room.hi+' ('+room.name+') का फ़र्नीचर देखें',onclick:()=>{
   setRoom(room.key);document.getElementById('products').scrollIntoView({behavior:'smooth'});
- }},[photo(room.image,room.name,'room__photo'),el('span',{class:'room__body'},[
-  el('span',{},[el('span',{class:'room__name',text:room.name}),el('span',{class:'room__items',text:room.items})]),arrow()
+ }},[photo(room.image,room.hi,'room__photo'),el('span',{class:'room__body'},[
+  el('span',{},[el('span',{class:'room__name',text:room.hi}),el('span',{class:'room__en',lang:'en',text:room.name}),el('span',{class:'room__items',text:room.hiItems})]),el('span',{class:'room__go',text:'देखें →'})
  ])])));
 }
 function renderTabs(){
  const root=document.getElementById('tabs');
- root.replaceChildren(...TABS.map(key=>el('button',{type:'button',class:'tab','aria-pressed':String(key===activeRoom),text:key,onclick:()=>setRoom(key)})));
+ root.replaceChildren(...TABS.map(key=>el('button',{type:'button',class:'tab','aria-pressed':String(key===activeRoom),onclick:()=>setRoom(key)},[ROOM_HI[key]||key,' ',el('small',{lang:'en',text:ROOM_EN[key]||key})])));
 }
 function formatPrice(price){
  if(price==null)return 'Request a quote';
  return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(price);
 }
-// Prices are never shown on the website: customers call or send an enquiry to ask.
-const SHOP_PHONE='+919451713626';
-function displayProductPrice(){return 'Call or enquire for price';}
-function callButton(extraClass){return el('a',{class:'btn btn--outline product__call'+(extraClass?' '+extraClass:''),href:'tel:'+SHOP_PHONE,text:'📞 Call for price','aria-label':'Call Rudra Furniture Mart to ask the price'});}
+// Prices are never shown on the website: customers call or WhatsApp to ask.
+function displayProductPrice(){return '💬 दाम के लिए कॉल / WhatsApp करें';}
+function callButton(extraClass){return el('a',{class:'btn btn--call'+(extraClass?' '+extraClass:''),href:'tel:'+SHOP_PHONE,text:'📞 दाम पूछें','aria-label':'दाम पूछने के लिए कॉल करें (Call for price)'});}
+function waButton(product,extraClass){return el('a',{class:'btn btn--wa'+(extraClass?' '+extraClass:''),href:waLink(productWaText(product)),target:'_blank',rel:'noopener',text:'💬 WhatsApp','aria-label':product.name+' के बारे में WhatsApp पर पूछें'});}
 function productEnquiry(product){
  const select=document.querySelector('#quote-form select[name="interest"]');
  const details=document.querySelector('#quote-form textarea[name="details"]');
- if(select){const map={Living:'Sofa',Bedroom:'Bed',Dining:'Dining set',Office:'Office furniture',Kids:'Custom order',Doors:'Custom order'};select.value=map[product.room]||'Something else';}
- if(details)details.value='Product: '+product.name+'\nMaterial/details: '+product.material+'\nPlease share availability and a price quotation.';
+ if(select){const t=hindiType(product);const v=/सोफ़ा/.test(t)?'Sofa':/पलंग|बेड/.test(t)?'Bed':/अलमारी/.test(t)?'Wardrobe':/डाइनिंग/.test(t)?'Dining set':/दरवाज़ा/.test(t)?'Door':product.room==='Office'?'Office furniture':'Something else';select.value=v;}
+ if(details)details.value='सामान (Product): '+product.name+'\nकृपया दाम और उपलब्धता बताएँ। (Please share price and availability.)';
  document.getElementById('contact').scrollIntoView({behavior:'smooth'});
  const nameField=document.querySelector('#quote-form input[name="name"]');
  if(nameField)nameField.focus({preventScroll:true});
@@ -129,7 +144,7 @@ function productEnquiry(product){
 function visibleProducts(){
  let list=PRODUCTS.filter(product=>{
   const roomMatch=activeRoom==='All'||product.room===activeRoom;
-  const text=(product.name+' '+product.room+' '+product.detail+' '+product.material).toLowerCase();
+  const text=(product.name+' '+product.room+' '+(ROOM_HI[product.room]||'')+' '+hindiType(product)+' '+product.detail+' '+product.material+' '+(product.category||'')).toLowerCase();
   const spaceMatch=activeSpace==='all'||activeSpace===product.space_type||product.space_type==='both';
   return roomMatch&&spaceMatch&&text.includes(searchTerm);
  });
@@ -137,31 +152,33 @@ function visibleProducts(){
  return list;
 }
 async function sharePublicProduct(product){
- const url='https://rudrafurnituremart.com/?product='+encodeURIComponent(product.slug||product.id);
- const payload={title:product.name,text:'View '+product.name+' at Rudra Furniture Mart',url};
+ const url=productUrl(product);
+ const payload={title:product.name,text:'रुद्र फ़र्नीचर मार्ट पर देखें: '+hindiType(product)+' — '+product.name,url};
  try{
   if(navigator.share){await navigator.share(payload);return;}
-  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);alert('Product link copied. Share it with anyone.');return;}
-  window.prompt('Copy this product link:',url);
- }catch(error){if(error.name!=='AbortError')window.prompt('Copy this product link:',url);}
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);alert('लिंक कॉपी हो गया। अब इसे किसी को भी भेजें।');return;}
+  window.prompt('यह लिंक कॉपी करें:',url);
+ }catch(error){if(error.name!=='AbortError')window.prompt('यह लिंक कॉपी करें:',url);}
 }
 function renderProducts(){
  const root=document.getElementById('product-grid'),list=visibleProducts(),count=document.getElementById('product-count');
- if(count)count.textContent=list.length+' '+(list.length===1?'item':'items');
- if(!list.length){root.replaceChildren(el('div',{class:'product-empty',text:'No matching furniture found. Try another search or category.'}));return;}
+ if(count)count.textContent=list.length+' सामान';
+ if(!list.length){root.replaceChildren(el('div',{class:'product-empty'},['😕 ऐसा कोई सामान नहीं मिला। दूसरा शब्द लिखें या ',el('a',{href:'tel:'+SHOP_PHONE,text:'हमें कॉल करें'}),' — दुकान पर और भी डिज़ाइन हैं।']));return;}
  root.replaceChildren(...list.map(product=>{
   const image=photo(product.image,product.name,'product__photo');
-  if(product.badge)image.append(el('span',{class:'product__badge',text:product.badge}));
-  image.classList.add('product__photo-clickable');image.setAttribute('role','button');image.setAttribute('tabindex','0');image.setAttribute('aria-label','View '+product.name+' photos');image.addEventListener('click',()=>openProductDetail(product));image.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openProductDetail(product);}});
-  const price=el('span',{class:'product__price product__price--quote',text:displayProductPrice(product)});
-  const detail=el('button',{type:'button',class:'btn btn--outline',text:'View details',onclick:()=>openProductDetail(product)});
-  const action=el('button',{type:'button',class:'btn btn--green',text:'Enquiry',onclick:()=>productEnquiry(product)});
-  const call=callButton();
-  const share=el('button',{type:'button',class:'btn btn--outline product__share',text:'Share',ariaLabel:'Share '+product.name,onclick:()=>sharePublicProduct(product)});
+  if(product.badge)image.append(el('span',{class:'product__badge',text:BADGE_HI[product.badge]||product.badge}));
+  image.append(el('span',{class:'product__zoom','aria-hidden':'true',text:'🔍 बड़ा देखें'}));
+  image.classList.add('product__photo-clickable');image.setAttribute('role','button');image.setAttribute('tabindex','0');image.setAttribute('aria-label',product.name+' की फ़ोटो और जानकारी देखें');image.addEventListener('click',()=>openProductDetail(product));image.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openProductDetail(product);}});
   return el('article',{class:'product'},[image,el('div',{class:'product__body'},[
-   el('span',{class:'product__meta',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.price_tier==='premium'?'Premium collection':'General collection')+' · '+product.room}),el('h3',{text:product.name}),
-   el('span',{class:'product__detail',text:product.detail}),el('span',{class:'product__meta',text:product.material}),
-   el('div',{class:'product__foot'},[price]),el('div',{class:'product__actions'},[call,action,detail,share])
+   el('span',{class:'product__hi',text:hindiType(product)+(product.space_type==='outdoor'?' · बाहर के लिए':'')}),
+   el('h3',{lang:'en',text:product.name}),
+   el('span',{class:'product__detail',text:product.detail}),
+   el('span',{class:'product__price',text:displayProductPrice(product)}),
+   el('div',{class:'product__actions'},[callButton(),waButton(product)]),
+   el('div',{class:'product__more'},[
+    el('button',{type:'button',text:'पूरी जानकारी',onclick:()=>openProductDetail(product)}),
+    el('button',{type:'button','aria-label':product.name+' शेयर करें',text:'↗ शेयर करें',onclick:()=>sharePublicProduct(product)})
+   ])
   ])]);
  }));
 }
@@ -191,12 +208,12 @@ function initForm(){
   event.preventDefault();
   const values=new FormData(form),name=String(values.get('name')||'').trim(),phone=String(values.get('phone')||'').trim();
   const phoneDigits=phone.replace(/\D/g,'');
-  if(phoneDigits.length<10||phoneDigits.length>15){alert('Please enter a valid phone number.');return;}
-  submit.disabled=true;submit.textContent='Sending enquiry…';
+  if(phoneDigits.length<10||phoneDigits.length>15){alert('कृपया सही मोबाइल नंबर लिखें (10 अंक)।\nPlease enter a valid phone number.');form.querySelector('input[name="phone"]').focus();return;}
+  const submitHtml=submit.innerHTML;submit.disabled=true;submit.textContent='भेजा जा रहा है… (Sending)';
   const {error}=await supabase.from('custom_inquiries').insert({name,phone,furniture_type:String(values.get('interest')||'Other'),requirements:String(values.get('details')||'').trim()||null,status:'new'});
-  submit.disabled=false;submit.textContent='Request a call back';
-  if(error){alert('We could not submit your enquiry right now. Please try again or contact the showroom.');console.error(error);return;}
-  form.hidden=true;thanks.hidden=false;form.reset();
+  submit.disabled=false;submit.innerHTML=submitHtml;
+  if(error){alert('माफ़ कीजिए, अभी जानकारी नहीं भेज पाए। कृपया दोबारा कोशिश करें या 94517 13626 पर कॉल करें।');console.error(error);return;}
+  form.hidden=true;thanks.hidden=false;form.reset();thanks.scrollIntoView({behavior:'smooth',block:'center'});
  });
  document.getElementById('send-another').addEventListener('click',()=>{thanks.hidden=true;form.hidden=false;});
 }
@@ -210,7 +227,7 @@ let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:''};
 let lastScrollY=window.scrollY||0,scrollFrame=false;
 function updateMobileHeaderScroll(){
  const header=document.querySelector('.header');if(!header)return;
- const mobile=window.matchMedia('(max-width: 640px)').matches;
+ const mobile=window.matchMedia('(max-width: 680px)').matches;
  if(!mobile){header.classList.remove('header--scroll-hidden');return;}
  const y=window.scrollY||0,delta=y-lastScrollY;
  if(y<70||delta<-7)header.classList.remove('header--scroll-hidden');
@@ -229,17 +246,18 @@ if(mobileMenuToggle&&primaryNavigation){
   mobileMenuToggle.setAttribute('aria-expanded',String(!expanded));
   primaryNavigation.classList.toggle('is-open',!expanded);
   mobileMenuToggle.querySelector('.mobile-menu-icon').textContent=expanded?'☰':'✕';
-  mobileMenuToggle.querySelector('.mobile-menu-label').textContent=expanded?'Menu':'Close';
+  mobileMenuToggle.querySelector('.mobile-menu-label').textContent=expanded?'मेनू':'बंद करें';
  });
  primaryNavigation.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{
   primaryNavigation.classList.remove('is-open');
   mobileMenuToggle.setAttribute('aria-expanded','false');
   mobileMenuToggle.querySelector('.mobile-menu-icon').textContent='☰';
-  mobileMenuToggle.querySelector('.mobile-menu-label').textContent='Menu';
+  mobileMenuToggle.querySelector('.mobile-menu-label').textContent='मेनू';
  }));
 }
 
 document.getElementById('year').textContent=new Date().getFullYear();
+initWhatsAppLinks();
 loadHomepageReviews();
 renderRooms();renderTabs();initCatalogueControls();initLaunchBanner();renderProducts();initForm();initCommerce();loadStoreProducts();
 
@@ -338,11 +356,11 @@ function openProductDetail(product){
  if(photos.length){
   const viewer=el('div',{class:'detail-gallery__viewer'});
   const main=el('img',{src:photos[0],alt:product.name+' main photograph'});
-  const imageShare=el('button',{type:'button',class:'detail-gallery__share',text:'Share this product',onclick:()=>sharePublicProduct(product)});
+  const imageShare=el('button',{type:'button',class:'detail-gallery__share',text:'↗ शेयर करें',onclick:()=>sharePublicProduct(product)});
   const openPhotoZoom=()=>{
    let zoomIndex=active,touchStartX=0,touchStartY=0;
    const overlay=el('div',{class:'product-photo-lightbox',role:'dialog','aria-modal':'true','aria-label':'Product photo gallery. Swipe to view all photos'});
-   const close=el('button',{type:'button',class:'product-photo-lightbox__close',text:'×',ariaLabel:'Close enlarged photos'});
+   const close=el('button',{type:'button',class:'product-photo-lightbox__close',text:'×','aria-label':'बंद करें'});
    const enlarged=el('img',{src:photos[zoomIndex],alt:product.name+' enlarged photo 1'});
    const counter=el('span',{class:'product-photo-lightbox__counter',text:(zoomIndex+1)+' / '+photos.length});
    const previous=el('button',{type:'button',class:'product-photo-lightbox__nav product-photo-lightbox__prev',text:'‹',ariaLabel:'Previous photo'});
@@ -358,26 +376,26 @@ function openProductDetail(product){
    if(photos.length<2){previous.hidden=true;next.hidden=true;counter.hidden=true;}
   };
   main.addEventListener('click',openPhotoZoom);
-  const zoom=el('button',{type:'button',class:'detail-gallery__zoom',text:'⛶ View larger',onclick:openPhotoZoom});
+  const zoom=el('button',{type:'button',class:'detail-gallery__zoom',text:'⛶ बड़ा देखें',onclick:openPhotoZoom});
   viewer.append(main,zoom,imageShare);
   const thumbs=el('div',{class:'detail-gallery__thumbs'});
   let active=0;
   photos.forEach((url,i)=>{const thumb=el('button',{type:'button',class:'detail-gallery__thumb'+(i===0?' is-active':''),ariaLabel:'View product photo '+(i+1),onclick:()=>{active=i;main.src=url;main.alt=product.name+' photo '+(i+1);thumbs.querySelectorAll('button').forEach((b,k)=>b.classList.toggle('is-active',k===i));}});thumb.append(el('img',{src:url,alt:product.name+' thumbnail '+(i+1),loading:'lazy'}));thumbs.append(thumb);});
   gallery.append(viewer,thumbs);
- }else gallery.append(el('div',{class:'detail-no-photo',text:'Product photographs will be added soon'}));
- const sizeWrap=el('div',{class:'product-size-picker'}),sizeLabel=el('label',{text:'Choose size'}),sizeSelect=el('select',{class:'product-size-select'});sizeSelect.append(new Option('Select a size',''));(product.size_options||[]).forEach(size=>sizeSelect.append(new Option(size,size)));if(!(product.size_options||[]).length)sizeSelect.append(new Option('Standard size','Standard size'));sizeLabel.append(sizeSelect);const customLabel=el('label',{text:'Need a custom size? Enter dimensions'}),customInput=el('input',{type:'text',maxlength:120,placeholder:'e.g. 6 ft × 6.5 ft, or your required dimensions'});customLabel.append(customInput);sizeWrap.append(sizeLabel,customLabel);
+ }else gallery.append(el('div',{class:'detail-no-photo',text:'फ़ोटो जल्दी ही जोड़ी जाएँगी · Photos coming soon'}));
+ const sizeWrap=el('div',{class:'product-size-picker'}),sizeLabel=el('label',{text:'साइज़ चुनें (Choose size)'}),sizeSelect=el('select',{class:'product-size-select'});sizeSelect.append(new Option('— साइज़ चुनें —',''));(product.size_options||[]).forEach(size=>sizeSelect.append(new Option(size,size)));if(!(product.size_options||[]).length)sizeSelect.append(new Option('सामान्य साइज़ (Standard)','Standard size'));sizeLabel.append(sizeSelect);const customLabel=el('label',{text:'अपना साइज़ चाहिए? नाप लिखें (Custom size)'}),customInput=el('input',{type:'text',maxlength:120,placeholder:'जैसे: 6 फ़ुट × 6.5 फ़ुट'});customLabel.append(customInput);sizeWrap.append(sizeLabel,customLabel);
  root.append(gallery,el('div',{class:'detail-copy'},[
-  el('span',{class:'eyebrow',text:(product.space_type==='outdoor'?'Outdoor':product.space_type==='both'?'Indoor & outdoor':'Indoor')+' · '+(product.category||product.room)}),
-  el('h2',{id:'detail-title',text:product.name}),el('p',{class:'detail-price',text:displayProductPrice(product)}),
+  el('span',{class:'product__hi',text:hindiType(product)+' · '+(product.space_type==='outdoor'?'बाहर के लिए':product.space_type==='both'?'अंदर व बाहर':'घर के अंदर')}),
+  el('h2',{id:'detail-title',lang:'en',text:product.name}),el('p',{class:'detail-price',text:displayProductPrice(product)}),
   el('p',{text:product.description||product.detail}),sizeWrap,
   el('dl',{class:'detail-specs'},[
-   el('dt',{text:'Material'}),el('dd',{text:product.material||'Please enquire'}),
-   el('dt',{text:'Dimensions'}),el('dd',{text:product.dimensions||'Made to suit your space'}),
-   el('dt',{text:'Colours / finishes'}),el('dd',{text:product.colors?.join(', ')||'Please enquire'}),
-   el('dt',{text:'Customisation'}),el('dd',{text:product.customization||'Please enquire'}),
-   el('dt',{text:'Delivery estimate'}),el('dd',{text:product.delivery_estimate||'To be confirmed'})
+   el('dt',{text:'लकड़ी / सामग्री'}),el('dd',{text:product.material||'फ़ोन पर पूछें'}),
+   el('dt',{text:'नाप (साइज़)'}),el('dd',{text:product.dimensions||'आपके कमरे के हिसाब से'}),
+   el('dt',{text:'रंग / पॉलिश'}),el('dd',{text:product.colors?.join(', ')||'फ़ोन पर पूछें'}),
+   el('dt',{text:'अपनी पसंद से बदलाव'}),el('dd',{text:product.customization||'फ़ोन पर पूछें'}),
+   el('dt',{text:'डिलीवरी का समय'}),el('dd',{text:product.delivery_estimate||'फ़ोन पर बताया जाएगा'})
   ]),
-  el('div',{class:'detail-actions'},[callButton('btn--lg'),el('button',{class:'btn btn--green btn--lg',type:'button',text:'Send enquiry',onclick:()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;closeLayer('product-modal');productEnquiry(product);const details=document.querySelector('#quote-form textarea[name="details"]');if(details&&(chosen||custom))details.value+=(chosen?'\nSize: '+chosen:'')+(custom?'\nCustom dimensions: '+custom:'');}})])
+  el('div',{class:'detail-actions'},[callButton('btn--lg'),(()=>{const wa=waButton(product,'btn--lg');wa.addEventListener('click',()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;wa.href=waLink(productWaText(product)+(chosen?'\nसाइज़: '+chosen:'')+(custom?'\nमेरा नाप: '+custom:''));});return wa;})(),el('button',{class:'btn btn--outline btn--lg',type:'button',text:'📝 फ़ॉर्म भरें — हम कॉल करेंगे',onclick:()=>{const custom=customInput.value.trim(),chosen=sizeSelect.value;closeLayer('product-modal');productEnquiry(product);const details=document.querySelector('#quote-form textarea[name="details"]');if(details&&(chosen||custom))details.value+=(chosen?'\nसाइज़ (Size): '+chosen:'')+(custom?'\nनाप (Custom): '+custom:'');}})])
  ]));openLayer('product-modal');
 }
 
@@ -403,15 +421,15 @@ document.getElementById('bill-lookup-form')?.addEventListener('submit',async e=>
 async function loadHomepageReviews(){
  const average=document.getElementById('home-review-average');if(!average)return;
  const {data,error}=await supabase.from('customer_reviews').select('customer_name,overall_rating,product_quality,design_variety,value_for_money,communication,delivery_experience,comment,created_at').eq('is_approved',true).eq('consent_to_publish',true).order('created_at',{ascending:false}).limit(60);
- if(error){document.getElementById('home-review-cards').textContent='Customer reviews are temporarily unavailable.';return;}
+ if(error){document.getElementById('home-review-cards').textContent='ग्राहकों की राय अभी नहीं दिख रही।';return;}
  const rows=data||[];const avg=rows.length?rows.reduce((n,r)=>n+r.overall_rating,0)/rows.length:0;
  average.textContent=rows.length?avg.toFixed(1)+'/5':'—';
  document.getElementById('home-review-stars').textContent=rows.length?'★'.repeat(Math.round(avg))+'☆'.repeat(5-Math.round(avg)):'☆☆☆☆☆';
- document.getElementById('home-review-count').textContent=rows.length?rows.length+' approved customer review'+(rows.length===1?'':'s'):'No published ratings yet';
- const params=[['Product quality','product_quality'],['Design & variety','design_variety'],['Value for money','value_for_money'],['Staff communication','communication'],['Delivery experience','delivery_experience']];
+ document.getElementById('home-review-count').textContent=rows.length?rows.length+' ग्राहकों की राय':'अभी कोई रेटिंग नहीं';
+ const params=[['सामान की क्वालिटी','product_quality'],['डिज़ाइन व वैरायटी','design_variety'],['दाम के हिसाब से','value_for_money'],['स्टाफ़ का व्यवहार','communication'],['डिलीवरी','delivery_experience']];
  const grid=document.getElementById('home-review-parameters');grid.replaceChildren();
  params.forEach(([label,key])=>{const score=rows.length?rows.reduce((n,r)=>n+r[key],0)/rows.length:0;const card=document.createElement('div');card.className='review-parameter';const title=document.createElement('strong');title.textContent=label;const value=document.createElement('b');value.textContent=rows.length?score.toFixed(1)+'/5':'—';card.append(title,value);grid.append(card);});
  const cards=document.getElementById('home-review-cards');cards.replaceChildren();
- if(!rows.length){const p=document.createElement('p');p.className='muted';p.textContent='Customer feedback will appear here after it has been reviewed and approved.';cards.append(p);return;}
+ if(!rows.length){const p=document.createElement('p');p.className='muted';p.textContent='ग्राहकों की राय जाँच के बाद यहाँ दिखेगी। आप भी अपनी राय दे सकते हैं।';cards.append(p);return;}
  rows.slice(0,3).forEach(r=>{const card=document.createElement('article');card.className='home-review-card';const top=document.createElement('div');top.className='home-review-card__top';const name=document.createElement('strong');name.textContent=r.customer_name;const stars=document.createElement('span');stars.className='home-stars';stars.textContent='★'.repeat(r.overall_rating)+'☆'.repeat(5-r.overall_rating);top.append(name,stars);const comment=document.createElement('p');comment.textContent=r.comment;const date=document.createElement('small');date.textContent=new Date(r.created_at).toLocaleDateString('en-IN');card.append(top,comment,date);cards.append(card);});
 }
