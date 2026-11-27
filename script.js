@@ -221,7 +221,8 @@ const CART_KEY='rudra_furniture_cart_v1';
 let cart=[];
 // upi_is_merchant: set to true in site_settings only for a BUSINESS UPI ID (PhonePe/Paytm/GPay Business).
 // UPI apps decline website pay links to personal UPI IDs, so the direct 'open app' button stays hidden otherwise.
-let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:'',upi_is_merchant:''};
+// upi_mc: merchant category code from the business QR (e.g. 0000 for PhonePe Business); added to pay links.
+let storePayment={upi_id:'',upi_name:'Rudra Furniture Mart',upi_qr_url:'',upi_is_merchant:'',upi_mc:''};
 
 
 
@@ -275,7 +276,7 @@ function openQuickPay(productName){
 function qpUpiUri(){
  if(!storePayment.upi_id||!quickPay)return '';
  const amount=quickPay.amount?'&am='+encodeURIComponent(quickPay.amount.toFixed(2)):'';
- return 'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name||'Rudra Furniture Mart')+amount+'&cu=INR&tn='+encodeURIComponent('Rudra Furniture Mart payment');
+ return 'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name||'Rudra Furniture Mart')+(storePayment.upi_mc?'&mc='+encodeURIComponent(storePayment.upi_mc):'')+amount+'&cu=INR&tn='+encodeURIComponent('Rudra Furniture Mart payment');
 }
 function qpRefreshConfirm(){
  if(!quickPay)return;
@@ -343,7 +344,7 @@ function openLayer(id){document.getElementById(id).hidden=false;document.body.cl
 function closeLayer(id){document.getElementById(id).hidden=true;if(!document.querySelector('.commerce-overlay:not([hidden])'))document.body.classList.remove('modal-open');}
 function initCommerce(){
  readCart();
- supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name','upi_qr_url','upi_is_merchant']).then(({data})=>{(data||[]).forEach(x=>storePayment[x.key]=String(x.value||'').replace(/^\"|\"$/g,''));refreshUpiDisplay();});
+ supabase.from('site_settings').select('key,value').in('key',['upi_id','upi_name','upi_qr_url','upi_is_merchant','upi_mc']).then(({data})=>{(data||[]).forEach(x=>storePayment[x.key]=String(x.value||'').replace(/^\"|\"$/g,''));refreshUpiDisplay();});
  document.querySelectorAll('input[name="payment_method"]').forEach(r=>r.addEventListener('change',refreshUpiDisplay));
  document.getElementById('copy-upi')?.addEventListener('click',async()=>{if(!storePayment.upi_id)return;try{await navigator.clipboard.writeText(storePayment.upi_id);document.getElementById('copy-upi').textContent='Copied';}catch{document.getElementById('upi-id-display').textContent=storePayment.upi_id;}});
  const showCart=()=>{renderCart();openLayer('cart-modal');};document.getElementById('open-cart').addEventListener('click',showCart);document.getElementById('floating-cart')?.addEventListener('click',showCart);
@@ -359,7 +360,7 @@ function refreshUpiDisplay(){
  const panel=document.getElementById('upi-payment-info');if(!panel)return;
  panel.hidden=!chosen;
  const total=cartProducts().reduce((n,x)=>n+x.product.price*x.quantity,0);
- const upiUri=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR&tn='+encodeURIComponent('Rudra Furniture Mart order'):'';
+ const upiUri=storePayment.upi_id?'upi://pay?pa='+encodeURIComponent(storePayment.upi_id)+'&pn='+encodeURIComponent(storePayment.upi_name)+(storePayment.upi_mc?'&mc='+encodeURIComponent(storePayment.upi_mc):'')+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR&tn='+encodeURIComponent('Rudra Furniture Mart order'):'';
  document.getElementById('upi-id-display').textContent=storePayment.upi_id?storePayment.upi_id+' · '+storePayment.upi_name:'UPI payment is not configured yet. Please choose Cash on Delivery or contact the showroom.';
  if(qrWrap&&qrImage){
   qrWrap.hidden=!chosen||!storePayment.upi_id;
